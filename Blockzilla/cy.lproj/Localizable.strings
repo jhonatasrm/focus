@@ -19,6 +19,9 @@
 /* Label for row in About screen */
 "About.rowHelp" = "Cymorth";
 
+/* Link to Privacy Notice in the About screen */
+"About.rowPrivacy" = "Hysbysiad Preifatrwydd";
+
 /* Label for row in About screen */
 "About.rowRights" = "Eich Hawliau";
 
@@ -58,6 +61,15 @@
 /* Button label to reload the error page */
 "Error.tryAgainButton" = "Ceisiwch eto";
 
+/* Button label used for cancelling to open another app from Focus */
+"ExternalAppLink.cancelTitle" = "Diddymu";
+
+/* Dialog title used for opening an external app from Focus. The placeholder string is the app name of either Focus or Klar. */
+"ExternalAppLink.messageTitle" = "Mae %@ eisiau agor Ap arall";
+
+/* Button label for opening another app from Focus */
+"ExternalAppLink.openTitle" = "Agor";
+
 /* Button label in tel: dialog to call a phone number. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
 "ExternalLink.callButton" = "Galw";
 
@@ -73,6 +85,9 @@
 /* Button label in App Store URL dialog to open the App Store. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
 "ExternalLink.openAppStoreButton" = "Agor yr App Store";
 
+/* Dialog title used to open App Store links. The placeholder is replaced with the application name, which can be either Firefox Focus or Firefox Klar. */
+"ExternalLink.openAppStoreTitle" = "Mae %@ eisiau agor yr App Store.";
+
 /* Button label in Maps URL dialog to open Maps. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
 "ExternalLink.openMapsButton" = "Agor Maps";
 
@@ -84,6 +99,9 @@
 
 /* Message label on the first run screen */
 "FirstRun.messageLabelTagline" = "Pori fel petai neb yn eich gwylio.";
+
+/* Title for the loading screen when the handoff of clipboard delays Focus launch. “Handoff” should not be localized, see https://support.apple.com/HT204681 */
+"Focus.handoffSyncing" = "Mae Apple Handoff yn cydweddu";
 
 /* First label for product description on the home screen */
 "Home.descriptionLabel1" = "Pori preifat awtomatig.";
@@ -124,6 +142,12 @@
 /* Button label for accepting Content blocker alert */
 "Settings.blockOtherYes" = "Rwy'n Deall";
 
+/* Description associated to the Send Usage Data toggle on main screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextSendUsageData" = "Mae Mozilla'n ceisio casglu dim ond yr hyn sydd ei angen arnom i ddarparu a gwella %@ ar gyfer pawb.";
+
+/* Subtitle for Send Anonymous Usage Data toggle on main screen */
+"Settings.learnMore" = "Dysgu rhagor.";
+
 /* Title for settings screen */
 "Settings.screenTitle" = "Gosodiadau";
 
@@ -148,8 +172,14 @@
 /* Label for toggle on main screen */
 "Settings.toggleBlockAds" = "Rhwystro tracwyr hysbysebion";
 
+/* Description for 'Block ad Trackers' */
+"Settings.toggleBlockAdsDescription" = "Mae rhai hysbysebion yn tracio ymweliadau â gwefannau, hyd yn oed heb i chi eu clicio";
+
 /* Label for toggle on main screen */
 "Settings.toggleBlockAnalytics" = "Rhwystro tracwyr dadansoddi";
+
+/* Description for 'Block analytics Trackers' */
+"Settings.toggleBlockAnalyticsDescription" = "Yn cael eu defnyddio i gasglu, dadansoddi a mesur gweithgareddau fel tapio a sgrolio";
 
 /* Label for toggle on main screen */
 "Settings.toggleBlockFonts" = "Rhwystro ffontiau Gwe";
@@ -157,8 +187,14 @@
 /* Label for toggle on main screen */
 "Settings.toggleBlockOther" = "Rhwystro tracwyr cynnwys eraill";
 
+/* Description for 'Block other content Trackers' */
+"Settings.toggleBlockOtherDescription" = "Gall ei alluogi achosi i rai tudalennau i ymddwyn yn rhyfedd";
+
 /* Label for toggle on main screen */
 "Settings.toggleBlockSocial" = "Rhwystro tracwyr cymdeithasol";
+
+/* Description for 'Block social Trackers' */
+"Settings.toggleBlockSocialDescription" = "Wedi eu mewnblannu ar wefannau er mwyn tracio eich ymweliadau ac i ddangos swyddogaethau fel botymau rhannu";
 
 /* Label subtitle for toggle on main screen */
 "Settings.toggleOtherSubtitle" = "Gall dorri rhai fideos a thudalennau Gwe";
@@ -166,14 +202,20 @@
 /* Safari toggle label on settings screen */
 "Settings.toggleSafari" = "Safari";
 
-/* Label for Send Anonymous Usage Data toggle on main screen */
-"Settings.toggleSendAnonymousUsageData" = "Anfon data defnydd dienw";
+/* Label for Send Usage Data toggle on main screen */
+"Settings.toggleSendUsageData" = "Anfon data defnydd";
 
-/* Subtitle for Send Anonymous Usage Data toggle on main screen */
-"Settings.toggleSendAnonymousUsageDataSubtitle" = "Dysgu rhagor";
+/* Text for the share menu option when a user wants to open a page in Firefox but doesn’t have it installed. This string will not wrap in the interface. Instead, it will truncate. To prevent this, please keep the localized string to 18 or fewer characters. If your string runs longer than 18 characters, you can use 'Get Firefox' as the basis for your string. However, if at all possible, we’d like to signal to the user that they will be going to the App Store and installing the application from there. That is why we are using Get and App in the en-US string. */
+"ShareMenu.GetFirefox" = "Estyn Ap Firefox";
+
+/* Text for the share menu option when a user wants to open a page in Focus. */
+"ShareMenu.OpenInFocus" = "Agor yn Focus";
 
 /* Label for cancel button shown when entering a URL or search */
 "URL.cancelLabel" = "Diddymu";
+
+/* Text for the URL context menu when a user long presses on the URL bar with clipboard contents. */
+"URL.contextMenu" = "Gludo a Mynd";
 
 /* Erase button in the URL bar */
 "URL.eraseButtonLabel" = "DILEU";
@@ -186,4 +228,64 @@
 
 /* Label displayed for search button when typing in the URL bar */
 "URL.searchLabel" = "Chwilio am %@";
+
+/* Text for the URL bar showing the number of trackers blocked on a webpage. */
+"URL.trackersBlockedLabel" = "Rhwystro tracwyr";
+
+/* Title for action sheet item to open the current page in another application. Placeholder is the name of the application to open the current page. */
+"actionSheet.openIn" = "Agor yn %@";
+
+/* Label to display in the Discoverability overlay for keyboard shortcuts */
+"browserShortcutDescription.selectLocationBar" = "Dewiswch y Bar Lleoliad";
+
+/* Text for the context menu when a user has a link on their clipboard. */
+"contextMenu.clipboardLink" = "Dolen wedi ei gopïo: %@";
+
+/* Text for the context menu when a user wants to copy an image after long pressing it. */
+"contextMenu.copyImageTitle" = "Copïo'r Ddelwedd";
+
+/* Text for the context menu when a user wants to copy a link after long pressing it. */
+"contextMenu.copyLink" = "Copïo Dolen";
+
+/* Text for the context menu when a user wants to save an image after long pressing it. */
+"contextMenu.saveImageTitle" = "Cadw'r Ddelwedd";
+
+/* Text for the context menu when a user wants to share a link after long pressing it. */
+"contextMenu.shareLinkTitle" = "Rhannu Dolen";
+
+/* Dialog title used for opening an external app from Focus. First placeholder string is the app name of either Focus or Klar and the second placeholder string specifies the app it wants to open. */
+"externalAppLinkWithAppName.messageTitle" = "Mae %1$@ eisiau agor %2$@";
+
+/* Description for dialog used for requesting a user to enable access to Photos. */
+"photosPermission.description" = "Mae hwn yn gadael i chi gadw delweddau i'ch Camera Roll";
+
+/* Title for button that takes the user to system settings */
+"photosPermission.openSettings" = "Agor Gosodiadau";
+
+/* Dialog title used for requesting a user to enable access to Photos. Placeholder is either Firefox Focus or Firefox Klar */
+"photosPermission.title" = "Hoffai “%@” Gael Mynediad at Eich Lluniau";
+
+/* Label for ad trackers. */
+"trackingProtection.adTrackersLabel" = "Tracwyr hysbysebion";
+
+/* label for analytic trackers. */
+"trackingProtection.analyticTrackerLabel" = "Tracwyr dadansoddi";
+
+/* label for content trackers. */
+"trackingProtection.contentTrackerLabel" = "Tracwyr cynnwys";
+
+/* text showing the tracking protection is disabled. */
+"trackingProtection.disabledLabel" = "Diogelu rhag Tracio i ffwrdd";
+
+/* label for social trackers. */
+"trackingProtection.socialTrackerLabel" = "Tracwyr cymdeithasol";
+
+/* Description for the tracking protection toggle. Placeholder is either Firefox Focus or Firefox Klar */
+"trackingProtection.toggleDescription1" = "Analluogi nes i chi gau %@ neu dapio ERASE.";
+
+/* Text for the toggle that temporarily disables tracking protection. */
+"trackingProtection.toggleLabel" = "Diogelwch rhag Tracio";
+
+/* General description of tracking protection settings, which is displayed underneath the trackers preferences in Settings. Placeholder is either Firefox Focus or Firefox Klar */
+"trackingProtection.trackerDescriptionLabel" = "Dewiswch p'un ai fydd %@ yn rhwystro tracwyr hysbysebion, dadansoddi, cymdeithasol a rhai eraill.";
 

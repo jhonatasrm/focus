@@ -20,13 +20,12 @@ class SnapshotTests: XCTestCase {
 
         snapshot("01Home")
 
-        app.buttons["URLBar.activateButton"].tap()
         snapshot("02LocationBarEmptyState")
-        app.textFields["URLBar.urlText"].typeText("people-mozilla.org")
+        app.textFields["URLBar.urlText"].typeText("bugzilla.mozilla.org")
         snapshot("03SearchFor")
 
         app.typeText("\n")
-        waitForValueContains(element: app.textFields["URLBar.urlText"], value: "https://people-mozilla.org/")
+        waitForValueContains(element: app.textFields["URLBar.urlText"], value: "https://bugzilla.mozilla.org/")
         snapshot("04EraseButton")
 
         app.buttons["URLBar.deleteButton"].tap()
@@ -60,9 +59,8 @@ class SnapshotTests: XCTestCase {
 
     func test04ShareMenu() {
         let app = XCUIApplication()
-        app.buttons["URLBar.activateButton"].tap()
-        app.textFields["URLBar.urlText"].typeText("people-mozilla.org\n")
-        waitForValueContains(element: app.textFields["URLBar.urlText"], value: "https://people-mozilla.org/")
+        app.textFields["URLBar.urlText"].typeText("bugzilla.mozilla.org\n")
+        waitForValueContains(element: app.textFields["URLBar.urlText"], value: "https://bugzilla.mozilla.org/")
         app.buttons["BrowserToolset.sendButton"].tap()
         snapshot("12ShareMenu")
     }
@@ -76,7 +74,6 @@ class SnapshotTests: XCTestCase {
 
     func test06OpenMaps() {
         let app = XCUIApplication()
-        app.buttons["URLBar.activateButton"].tap()
         app.textFields["URLBar.urlText"].typeText("maps.apple.com\n")
         waitForValueContains(element: app.textFields["URLBar.urlText"], value: "http://maps.apple.com")
         snapshot("06OpenMaps")
@@ -84,10 +81,33 @@ class SnapshotTests: XCTestCase {
 
     func test07OpenAppStore() {
         let app = XCUIApplication()
-        app.buttons["URLBar.activateButton"].tap()
         app.textFields["URLBar.urlText"].typeText("itunes.apple.com\n")
         waitForValueContains(element: app.textFields["URLBar.urlText"], value: "http://itunes.apple.com")
         snapshot("07OpenAppStore")
+    }
+
+    func test08PasteAndGo() {
+        let app = XCUIApplication()
+        // Inject a string into clipboard
+        let clipboardString = "Hello world"
+        UIPasteboard.general.string = clipboardString
+
+        // Enter 'mozilla' on the search field
+        let searchOrEnterAddressTextField = app.textFields["URLBar.urlText"]
+        searchOrEnterAddressTextField.typeText("mozilla.org\n")
+
+        // Check the correct site is reached
+        waitForValueContains(element: searchOrEnterAddressTextField, value: "https://www.mozilla.org/")
+
+        // Tap URL field, check for paste & go menu
+        searchOrEnterAddressTextField.tap()
+        searchOrEnterAddressTextField.press(forDuration: 1.5)
+        expectation(for: NSPredicate(format: "count > 0"), evaluatedWith: app.menuItems, handler: nil)
+        waitForExpectations(timeout: 10, handler: nil)
+
+        app.menuItems.element(boundBy: 3).tap()
+
+        snapshot("08PasteAndGo")
     }
 
     func waitForValueContains(element:XCUIElement, value:String, file: String = #file, line: UInt = #line) {

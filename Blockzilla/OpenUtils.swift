@@ -12,7 +12,11 @@ class OpenUtils {
         return app.canOpenURL(URL(string: "firefox://")!)
     }
 
-    private static func openInFirefox(url: URL) {
+    private static var canOpenInChrome: Bool {
+        return app.canOpenURL(URL(string: "googlechrome://")!)
+    }
+
+    static func openInFirefox(url: URL) {
         guard let escaped = url.absoluteString.addingPercentEncoding(withAllowedCharacters: .urlQueryParameterAllowed),
               let firefoxURL = URL(string: "firefox://open-url?url=\(escaped)&private=true"),
               app.canOpenURL(firefoxURL) else {
@@ -20,52 +24,74 @@ class OpenUtils {
         }
 
         Telemetry.default.recordEvent(category: TelemetryEventCategory.action, method: TelemetryEventMethod.open, object: TelemetryEventObject.menu, value: "firefox")
-        app.openURL(firefoxURL)
+        app.open(firefoxURL, options: [:])
     }
 
-    private static func openFirefoxInstall() {
+    static func openInChrome(url: URL) {
+        // Code pulled from https://github.com/GoogleChrome/OpenInChrome
+        // Replace the URL Scheme with the Chrome equivalent.
+        var chromeScheme: String?
+        if (url.scheme == "http") {
+            chromeScheme = "googlechrome"
+        } else if (url.scheme == "https") {
+            chromeScheme = "googlechromes"
+        }
+
+        // Proceed only if a valid Google Chrome URI Scheme is available.
+        guard let scheme = chromeScheme,
+              let rangeForScheme = url.absoluteString.range(of: ":"),
+              let chromeURL = URL(string: scheme + url.absoluteString[rangeForScheme.lowerBound...]) else { return }
+
+        // Open the URL with Chrome.
+        app.open(chromeURL, options: [:])
+    }
+
+    static func openFirefoxInstall() {
         Telemetry.default.recordEvent(category: TelemetryEventCategory.action, method: TelemetryEventMethod.openAppStore, object: TelemetryEventObject.menu, value: "firefox")
-        UIApplication.shared.openURL(AppInfo.config.firefoxAppStoreURL)
+        app.open(AppInfo.config.firefoxAppStoreURL, options: [:])
     }
 
-    private static func openInSafari(url: URL) {
+    static func openInSafari(url: URL) {
         Telemetry.default.recordEvent(category: TelemetryEventCategory.action, method: TelemetryEventMethod.open, object: TelemetryEventObject.menu, value: "default")
-        app.openURL(url)
+        app.open(url, options: [:])
     }
 
-    static func buildShareAlert(url: URL, anchor: UIView, shareCallback: @escaping (UIActivityViewController) -> ()) -> UIAlertController {
-        let alert = UIAlertController(title: url.absoluteString, message: nil, preferredStyle: .actionSheet)
+    static func buildShareViewController(url: URL, title: String? = nil, printFormatter: UIPrintFormatter?, anchor: UIView) -> UIActivityViewController {
+        var activities = [UIActivity]()
+        var activityItems: [Any] = [url]
+        if canOpenInFirefox {
+            activities.append(OpenInFirefoxActivity(url: url))
+        }
 
-        alert.addAction(UIAlertAction(title: UIConstants.strings.openFirefox, style: .default) { _ in
-            // If Firefox isn't installed, launch the URL to download it in the App Store.
-            guard canOpenInFirefox else {
-                openFirefoxInstall()
-                return
-            }
+        if canOpenInChrome {
+            activities.append(OpenInChromeActivity(url: url))
+        }
 
-            openInFirefox(url: url)
-        })
+        activities.append(OpenInSafariActivity(url: url))
+        
+        if let printFormatter = printFormatter {
+            let printInfo = UIPrintInfo(dictionary: nil)
+            printInfo.jobName = url.absoluteString
+            printInfo.outputType = .general
+            activityItems.append(printInfo)
+            
+            let renderer = UIPrintPageRenderer()
+            renderer.addPrintFormatter(printFormatter, startingAtPageAt: 0)
+            activityItems.append(renderer)
+        }
 
-        alert.addAction(UIAlertAction(title: UIConstants.strings.openSafari, style: .default) { _ in
-            openInSafari(url: url)
-        })
+        if let title = title {
+            activityItems.append(TitleActivityItemProvider(title: title))
+        }
+        
+        activityItems.append(url as AnyObject)
 
-        alert.addAction(UIAlertAction(title: UIConstants.strings.openMore, style: .default) { _ in
-            Telemetry.default.recordEvent(category: TelemetryEventCategory.action, method: TelemetryEventMethod.share, object: TelemetryEventObject.menu)
+        let shareController = UIActivityViewController(activityItems: activityItems, applicationActivities: activities)
 
-            let controller = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-            controller.popoverPresentationController?.sourceView = anchor
-            controller.popoverPresentationController?.sourceRect = anchor.bounds
-            controller.popoverPresentationController?.permittedArrowDirections = .up
-            shareCallback(controller)
-        })
-
-        alert.addAction(UIAlertAction(title: UIConstants.strings.openCancel, style: .cancel, handler: nil))
-
-        alert.popoverPresentationController?.sourceView = anchor
-        alert.popoverPresentationController?.sourceRect = anchor.bounds
-        alert.popoverPresentationController?.permittedArrowDirections = .up
-
-        return alert
+        shareController.popoverPresentationController?.sourceView = anchor
+        shareController.popoverPresentationController?.sourceRect = anchor.bounds
+        shareController.popoverPresentationController?.permittedArrowDirections = .up
+        
+        return shareController
     }
 }

@@ -12,19 +12,16 @@ class WebsiteAccessTests: BaseTestCase {
     }
     
     override func tearDown() {
-        XCUIApplication().terminate()
+        app.terminate()
         super.tearDown()
     }
  
     func testVisitWebsite() {
-        let app = XCUIApplication()
-        
         // Check initial page
         XCTAssertTrue(app.staticTexts["Browse. Erase. Repeat."].exists)
         XCTAssertTrue(app.staticTexts["Automatic private browsing."].exists)
         
         // Enter 'mozilla' on the search field
-        app.buttons["Search or enter address"].tap()
         let searchOrEnterAddressTextField = app.textFields["Search or enter address"]
         XCTAssertTrue(searchOrEnterAddressTextField.exists)
         XCTAssertTrue(searchOrEnterAddressTextField.isEnabled)
@@ -34,10 +31,15 @@ class WebsiteAccessTests: BaseTestCase {
         searchOrEnterAddressTextField.typeText("mozilla")
         waitForValueMatch(element: label, value: "mozilla.org/")
         waitforExistence(element: app.buttons["Search for mozilla"])
-        app.typeText("\n")
+        
+        // BB CI seems to hang intermittently where http to https redirection occurs.
+        // Providing straight URL to avoid the error - and use internal website
+        app.buttons["icon clear"].tap()
+        searchOrEnterAddressTextField.typeText("http://localhost:6573/licenses.html\n")
         
         // Check the correct site is reached
-        waitForValueContains(element: label, value: "https://www.mozilla.org/en-US/")
+        waitForWebPageLoad()
+        waitForValueContains(element: label, value: "localhost")
         
         // Erase the history
         app.buttons["ERASE"].tap()

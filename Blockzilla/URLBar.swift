@@ -20,34 +20,37 @@ protocol URLBarDelegate: class {
 class URLBar: UIView {
     weak var delegate: URLBarDelegate?
 
-    let progressBar = UIProgressView(progressViewStyle: .bar)
+    let progressBar = GradientProgressBar(progressViewStyle: .bar)
     var inBrowsingMode: Bool = false
+    var shouldPresent = false
     fileprivate(set) var isEditing = false
 
     fileprivate let cancelButton = InsetButton()
     fileprivate let deleteButton = InsetButton()
     fileprivate let domainCompletion = DomainCompletion()
-    fileprivate let activateButton = UIButton()
 
     private let toolset = BrowserToolset()
     private let urlTextContainer = UIView()
     private let urlText = URLTextField()
+    private let truncatedUrlText = UITextView()
     private let lockIcon = UIImageView(image: #imageLiteral(resourceName: "icon_https"))
+    private let smallLockIcon = UIImageView(image: #imageLiteral(resourceName: "icon_https_small"))
     private let urlBarBackgroundView = UIView()
+    private let textAndLockContainer = UIView()
+    private let collapsedUrlAndLockWrapper = UIView()
 
     private var fullWidthURLTextConstraints = [Constraint]()
     private var centeredURLConstraints = [Constraint]()
     private var hideLockConstraints = [Constraint]()
+    private var hideSmallLockConstraints = [Constraint]()
     private var hideToolsetConstraints = [Constraint]()
     private var showToolsetConstraints = [Constraint]()
     private var isEditingConstraints = [Constraint]()
     private var preActivationConstraints = [Constraint]()
     private var postActivationConstraints = [Constraint]()
     
-    let menuController = UIMenuController.shared
-
-    init() {
-        super.init(frame: CGRect.zero)
+    convenience init() {
+        self.init(frame: CGRect.zero)
 
         addSubview(toolset.backButton)
         addSubview(toolset.forwardButton)
@@ -60,15 +63,35 @@ class URLBar: UIView {
 
         addSubview(urlTextContainer)
 
-        let textAndLockContainer = UIView()
         urlTextContainer.addSubview(textAndLockContainer)
 
         lockIcon.isHidden = true
         lockIcon.alpha = 0
         lockIcon.contentMode = .center
-        lockIcon.setContentCompressionResistancePriority(1000, for: .horizontal)
-        lockIcon.setContentHuggingPriority(1000, for: .horizontal)
+        lockIcon.setContentCompressionResistancePriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
+        lockIcon.setContentHuggingPriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
         textAndLockContainer.addSubview(lockIcon)
+
+        smallLockIcon.alpha = 0
+        smallLockIcon.contentMode = .center
+        smallLockIcon.setContentCompressionResistancePriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
+        smallLockIcon.setContentHuggingPriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
+        smallLockIcon.accessibilityIdentifier = "Collapsed.smallLockIcon"
+
+        truncatedUrlText.alpha = 0
+        truncatedUrlText.isUserInteractionEnabled = false
+        truncatedUrlText.font = UIConstants.fonts.truncatedUrlText
+        truncatedUrlText.tintColor = UIConstants.colors.urlTextFont
+        truncatedUrlText.backgroundColor = UIColor.clear
+        truncatedUrlText.contentMode = .bottom
+        truncatedUrlText.textColor = UIConstants.colors.urlTextFont
+        truncatedUrlText.setContentHuggingPriority(UILayoutPriority(rawValue: 1000), for: .vertical)
+        truncatedUrlText.isScrollEnabled = false
+        truncatedUrlText.accessibilityIdentifier = "Collapsed.truncatedUrlText"
+
+        collapsedUrlAndLockWrapper.addSubview(smallLockIcon)
+        collapsedUrlAndLockWrapper.addSubview(truncatedUrlText)
+        addSubview(collapsedUrlAndLockWrapper)
 
         // UITextField doesn't allow customization of the clear button, so we create
         // our own so we can use it as the rightView.
@@ -77,7 +100,6 @@ class URLBar: UIView {
         clearButton.setImage(#imageLiteral(resourceName: "icon_clear"), for: .normal)
         clearButton.addTarget(self, action: #selector(didPressClear), for: .touchUpInside)
 
-        urlText.isUserInteractionEnabled = false
         urlText.font = UIConstants.fonts.urlText
         urlText.tintColor = UIConstants.colors.urlTextFont
         urlText.textColor = UIConstants.colors.urlTextFont
@@ -87,18 +109,19 @@ class URLBar: UIView {
         urlText.autocorrectionType = .no
         urlText.rightView = clearButton
         urlText.rightViewMode = .whileEditing
-        urlText.setContentHuggingPriority(1000, for: .vertical)
+        urlText.setContentHuggingPriority(UILayoutPriority(rawValue: 1000), for: .vertical)
         urlText.autocompleteDelegate = self
         urlText.completionSource = domainCompletion
         urlText.accessibilityIdentifier = "URLBar.urlText"
+        urlText.placeholder = UIConstants.strings.urlTextPlaceholder
         textAndLockContainer.addSubview(urlText)
 
         cancelButton.isHidden = true
         cancelButton.alpha = 0
         cancelButton.setTitle(UIConstants.strings.urlBarCancel, for: .normal)
         cancelButton.titleLabel?.font = UIConstants.fonts.cancelButton
-        cancelButton.setContentHuggingPriority(1000, for: .horizontal)
-        cancelButton.setContentCompressionResistancePriority(1000, for: .horizontal)
+        cancelButton.setContentHuggingPriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
+        cancelButton.setContentCompressionResistancePriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
         cancelButton.addTarget(self, action: #selector(dismiss), for: .touchUpInside)
         addSubview(cancelButton)
 
@@ -111,8 +134,8 @@ class URLBar: UIView {
         deleteButton.layer.borderWidth = 1
         deleteButton.layer.cornerRadius = 2
         deleteButton.layer.borderColor = UIConstants.colors.deleteButtonBorder.cgColor
-        deleteButton.setContentHuggingPriority(1000, for: .horizontal)
-        deleteButton.setContentCompressionResistancePriority(1000, for: .horizontal)
+        deleteButton.setContentHuggingPriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
+        deleteButton.setContentCompressionResistancePriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
         deleteButton.addTarget(self, action: #selector(didPressDelete), for: .touchUpInside)
         deleteButton.accessibilityIdentifier = "URLBar.deleteButton"
         addSubview(deleteButton)
@@ -127,21 +150,12 @@ class URLBar: UIView {
         hiddenDeleteButton.isHidden = true
         hiddenDeleteButton.setTitle(UIConstants.strings.eraseButton, for: .normal)
         hiddenDeleteButton.titleLabel?.font = UIConstants.fonts.deleteButton
-        hiddenDeleteButton.setContentHuggingPriority(1000, for: .horizontal)
-        hiddenDeleteButton.setContentCompressionResistancePriority(1000, for: .horizontal)
+        hiddenDeleteButton.setContentHuggingPriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
+        hiddenDeleteButton.setContentCompressionResistancePriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
         addSubview(hiddenDeleteButton)
-
-        activateButton.setTitle(UIConstants.strings.urlTextPlaceholder, for: .normal)
-        activateButton.titleLabel?.font = UIConstants.fonts.urlText
-        activateButton.setTitleColor(UIConstants.colors.urlTextPlaceholder, for: .normal)
-        activateButton.titleEdgeInsets = UIEdgeInsetsMake(0, UIConstants.layout.urlBarWidthInset, 0, UIConstants.layout.urlBarWidthInset)
-        activateButton.addTarget(self, action: #selector(didPressActivate), for: .touchUpInside)
-        activateButton.accessibilityIdentifier = "URLBar.activateButton"
-        addSubview(activateButton)
 
         progressBar.isHidden = true
         progressBar.alpha = 0
-        progressBar.progressTintColor = UIConstants.colors.progressBar
         addSubview(progressBar)
 
         let toolsetButtonWidthMultiplier = 0.08
@@ -244,26 +258,47 @@ class URLBar: UIView {
 
         progressBar.snp.makeConstraints { make in
             make.leading.trailing.equalTo(self)
-            make.bottom.equalTo(self).offset(-1)
-            make.height.equalTo(1)
+            make.bottom.equalTo(self).offset(1)
+            make.height.equalTo(3)
         }
 
-        activateButton.snp.makeConstraints { make in
-            make.edges.equalTo(urlTextContainer)
+        smallLockIcon.snp.makeConstraints { make in
+            make.leading.equalTo(collapsedUrlAndLockWrapper)
+            make.trailing.equalTo(truncatedUrlText.snp.leading)
+            make.bottom.equalTo(self)
+
+            hideLockConstraints.append(contentsOf: [
+                make.width.equalTo(0).constraint
+            ])
+        }
+
+        truncatedUrlText.snp.makeConstraints { make in
+            make.leading.equalTo(smallLockIcon.snp.trailing)
+            make.trailing.equalTo(collapsedUrlAndLockWrapper)
+            make.bottom.equalTo(smallLockIcon).offset(5)
+        }
+
+        collapsedUrlAndLockWrapper.snp.makeConstraints { make in
+            make.centerX.equalTo(self)
+            make.top.bottom.equalTo(smallLockIcon)
+            make.height.equalTo(UIConstants.layout.collapsedUrlBarHeight)
+            make.leading.equalTo(smallLockIcon)
+            make.trailing.equalTo(truncatedUrlText)
         }
 
         centeredURLConstraints.forEach { $0.deactivate() }
         showToolsetConstraints.forEach { $0.deactivate() }
         postActivationConstraints.forEach { $0.deactivate() }
         
-        addCustomMenu()
     }
-
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    
+    @discardableResult override func becomeFirstResponder() -> Bool {
+        return urlText.becomeFirstResponder()
     }
-
-    func pasteAndGo() {
+    
+    @objc func pasteAndGo() {
+        present()
+        delegate?.urlBarDidActivate(self)
         delegate?.urlBar(self, didSubmitText: UIPasteboard.general.string!)
 
         Telemetry.default.recordEvent(category: TelemetryEventCategory.action, method: TelemetryEventMethod.click, object: TelemetryEventObject.pasteAndGo)
@@ -276,7 +311,10 @@ class URLBar: UIView {
             UIMenuController.shared.menuItems = [lookupMenu]
         }
     }
-
+    override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
+        addCustomMenu()
+        return super.canPerformAction(action, withSender: sender)
+    }
     var url: URL? = nil {
         didSet {
             if !urlText.isEditing {
@@ -285,7 +323,6 @@ class URLBar: UIView {
             }
         }
     }
-
     weak var toolsetDelegate: BrowserToolsetDelegate? {
         didSet {
             toolset.delegate = toolsetDelegate
@@ -329,8 +366,20 @@ class URLBar: UIView {
                 return
             }
         }
-
         super.touchesEnded(touches, with: event)
+    }
+
+    func ensureBrowsingMode() {
+        shouldPresent = false
+        isEditing = true
+        inBrowsingMode = true
+        dismiss()
+        postActivationConstraints.forEach { $0.activate() }
+        preActivationConstraints.forEach { $0.deactivate() }
+    }
+
+    func fillUrlBar(text: String) {
+        urlText.text = text
     }
 
     private func updateLockIcon() {
@@ -343,8 +392,10 @@ class URLBar: UIView {
         UIView.animate(withDuration: duration) {
             if visible {
                 self.hideLockConstraints.forEach { $0.deactivate() }
+                self.hideSmallLockConstraints.forEach { $0.deactivate() }
             } else {
                 self.hideLockConstraints.forEach { $0.activate() }
+                self.hideSmallLockConstraints.forEach { $0.activate() }
             }
 
             self.layoutIfNeeded()
@@ -354,7 +405,14 @@ class URLBar: UIView {
     fileprivate func present() {
         guard !isEditing else { return }
 
+        UIView.animate(withDuration: UIConstants.layout.urlBarTransitionAnimationDuration) {
+            self.preActivationConstraints.forEach { $0.deactivate() }
+            self.postActivationConstraints.forEach { $0.activate() }
+            self.layoutIfNeeded()
+        }
+
         isEditing = true
+        shouldPresent = false
         updateLockIcon()
         toolset.sendButton.isEnabled = false
         delegate?.urlBarDidFocus(self)
@@ -463,31 +521,11 @@ class URLBar: UIView {
         delegate?.urlBar(self, didEnterText: "")
     }
 
-    @objc private func didPressActivate(_ button: UIButton) {
-        UIView.animate(withDuration: UIConstants.layout.urlBarTransitionAnimationDuration, animations: {
-            button.contentHorizontalAlignment = .left
-            self.preActivationConstraints.forEach { $0.deactivate() }
-            self.postActivationConstraints.forEach { $0.activate() }
-            self.layoutIfNeeded()
-        }, completion: { finished in
-            self.urlText.placeholder = UIConstants.strings.urlTextPlaceholder
-            button.isHidden = true
-        })
-
-        urlText.isUserInteractionEnabled = true
-        urlText.becomeFirstResponder()
-        delegate?.urlBarDidActivate(self)
-    }
-
     private func deactivate() {
         urlText.text = nil
-        urlText.placeholder = nil
         urlText.rightView?.isHidden = true
-        activateButton.isHidden = false
-        urlText.isUserInteractionEnabled = false
 
         UIView.animate(withDuration: UIConstants.layout.urlBarTransitionAnimationDuration, animations: {
-            self.activateButton.contentHorizontalAlignment = .center
             self.postActivationConstraints.forEach { $0.deactivate() }
             self.preActivationConstraints.forEach { $0.activate() }
             self.layoutIfNeeded()
@@ -498,6 +536,7 @@ class URLBar: UIView {
 
     fileprivate func setTextToURL() {
         var displayURL: String? = nil
+        var truncatedURL: String? = nil
 
         if let url = url {
             // Strip the username/password to prevent domain spoofing.
@@ -505,19 +544,45 @@ class URLBar: UIView {
             components?.user = nil
             components?.password = nil
             displayURL = components?.url?.absoluteString
+            truncatedURL = components?.host
         }
         urlText.text = displayURL
+        truncatedUrlText.text = truncatedURL
+    }
+
+    func collapseUrlBar(expandAlpha: CGFloat, collapseAlpha: CGFloat) {
+        self.isUserInteractionEnabled = (expandAlpha == 1)
+
+        deleteButton.alpha = expandAlpha
+        urlTextContainer.alpha = expandAlpha
+        truncatedUrlText.alpha = collapseAlpha
+        collapsedUrlAndLockWrapper.alpha = collapseAlpha
+        toolset.backButton.alpha = expandAlpha
+        toolset.forwardButton.alpha = expandAlpha
+        toolset.stopReloadButton.alpha = expandAlpha
+        toolset.sendButton.alpha = expandAlpha
+        // updating the small lock icon status here in order to prevent the icon from flashing on start up
+        let visible = !isEditing && (url?.scheme == "https")
+        smallLockIcon.alpha = visible ? collapseAlpha : 0
+        self.layoutIfNeeded()
     }
 }
 
 extension URLBar: AutocompleteTextFieldDelegate {
     func autocompleteTextFieldShouldBeginEditing(_ autocompleteTextField: AutocompleteTextField) -> Bool {
-        // shouldBeginEditing is fired out-of-band from the touch event, so check the user interaction
-        // flag here to make sure it hasn't changed.
-        guard isUserInteractionEnabled else { return false }
 
-        present()
         autocompleteTextField.highlightAll()
+        
+        if !isEditing && inBrowsingMode {
+            present()
+            delegate?.urlBarDidActivate(self)
+        }
+        
+        // When text.characters.count == 0, it is the HomeView
+        if let text = autocompleteTextField.text, !isEditing, text.characters.count == 0 {
+            shouldPresent = true
+        }
+
         return true
     }
 
@@ -528,6 +593,12 @@ extension URLBar: AutocompleteTextFieldDelegate {
 
     func autocompleteTextField(_ autocompleteTextField: AutocompleteTextField, didTextChange text: String) {
         autocompleteTextField.rightView?.isHidden = text.isEmpty
+
+        if !isEditing && shouldPresent {
+            present()
+            delegate?.urlBarDidActivate(self)
+        }
+
         delegate?.urlBar(self, didEnterText: text)
     }
 }
@@ -535,7 +606,7 @@ extension URLBar: AutocompleteTextFieldDelegate {
 private class URLTextField: AutocompleteTextField {
     override var placeholder: String? {
         didSet {
-            attributedPlaceholder = NSAttributedString(string: placeholder ?? "", attributes: [NSForegroundColorAttributeName: UIConstants.colors.urlTextPlaceholder])
+            attributedPlaceholder = NSAttributedString(string: placeholder ?? "", attributes: [NSAttributedStringKey.foregroundColor: UIConstants.colors.urlTextPlaceholder])
         }
     }
 

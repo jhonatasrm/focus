@@ -5,31 +5,34 @@
 "About.missionLabel" = "%@ 由 Mozilla 出品。我们的使命是促成健康、开放的互联网。";
 
 /* Label on About screen */
-"About.privateBullet1" = "在应用中搜索和浏览";
+"About.privateBullet1" = "直接在应用中搜索和浏览";
 
 /* Label on About screen */
-"About.privateBullet2" = "屏蔽跟踪器（或设置为允许跟踪器）";
+"About.privateBullet2" = "拦截跟踪器（也可调整为允许跟踪器）";
 
 /* Label on About screen */
-"About.privateBullet3" = "自动删除 Cookie 及搜索和浏览记录";
+"About.privateBullet3" = "清除 Cookie、搜索记录和浏览记录";
 
 /* Label on About screen */
-"About.privateBulletHeader" = "使用它作为隐私浏览器：";
+"About.privateBulletHeader" = "用作私密浏览器，可以：";
 
 /* Label for row in About screen */
 "About.rowHelp" = "帮助";
+
+/* Link to Privacy Notice in the About screen */
+"About.rowPrivacy" = "隐私声明";
 
 /* Label for row in About screen */
 "About.rowRights" = "您的权利";
 
 /* Label on About screen */
-"About.safariBullet1" = "屏蔽跟踪器以保障隐私";
+"About.safariBullet1" = "拦截跟踪器，加强隐私";
 
 /* Label on About screen */
-"About.safariBullet2" = "屏蔽网络字体以减少页面大小";
+"About.safariBullet2" = "拦截网络字体，减少网页大小";
 
 /* Label on About screen */
-"About.safariBulletHeader" = "使用它作为 Safari 扩展：";
+"About.safariBulletHeader" = "用作 Safari 扩展，可以：";
 
 /* Title for the About screen */
 "About.screenTitle" = "关于";
@@ -58,6 +61,15 @@
 /* Button label to reload the error page */
 "Error.tryAgainButton" = "重试";
 
+/* Button label used for cancelling to open another app from Focus */
+"ExternalAppLink.cancelTitle" = "取消";
+
+/* Dialog title used for opening an external app from Focus. The placeholder string is the app name of either Focus or Klar. */
+"ExternalAppLink.messageTitle" = "%@ 想打开另一个应用";
+
+/* Button label for opening another app from Focus */
+"ExternalAppLink.openTitle" = "打开";
+
 /* Button label in tel: dialog to call a phone number. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
 "ExternalLink.callButton" = "拨叫";
 
@@ -73,23 +85,29 @@
 /* Button label in App Store URL dialog to open the App Store. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
 "ExternalLink.openAppStoreButton" = "打开 App Store";
 
+/* Dialog title used to open App Store links. The placeholder is replaced with the application name, which can be either Firefox Focus or Firefox Klar. */
+"ExternalLink.openAppStoreTitle" = "%@ 想要打开 App Store。";
+
 /* Button label in Maps URL dialog to open Maps. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
 "ExternalLink.openMapsButton" = "打开地图";
 
 /* Label on button to dismiss first run UI */
-"FirstRun.buttonLabel" = "明白了";
+"FirstRun.buttonLabel" = "明白了！";
 
 /* Message label on the first run screen */
-"FirstRun.messageLabelDescription" = "在您浏览时自动屏蔽在线跟踪器。一按即可清除您的设备上的访问记录、搜索记录、Cookie 以及保存的密码。";
+"FirstRun.messageLabelDescription" = "在您浏览时自动拦截在线跟踪器。一按即可清除您的设备上的访问记录、搜索记录、Cookie 以及密码。";
 
 /* Message label on the first run screen */
-"FirstRun.messageLabelTagline" = "安心浏览";
+"FirstRun.messageLabelTagline" = "畅游网络，拒绝监视。";
+
+/* Title for the loading screen when the handoff of clipboard delays Focus launch. “Handoff” should not be localized, see https://support.apple.com/HT204681 */
+"Focus.handoffSyncing" = "通用剪贴板（Handoff）正在同步";
 
 /* First label for product description on the home screen */
-"Home.descriptionLabel1" = "自动化隐私浏览。";
+"Home.descriptionLabel1" = "全自动的隐私浏览。";
 
 /* Second label for product description on the home screen */
-"Home.descriptionLabel2" = "无痕浏览，无需劳心。";
+"Home.descriptionLabel2" = "无痕浏览，不必劳心。";
 
 /* Label in share alert to cancel the alert */
 "Open.Cancel" = "取消";
@@ -116,13 +134,19 @@
 "Safari.instructionsOpen" = "打开“设置”应用";
 
 /* Alert message shown when toggling the Content blocker */
-"Settings.blockOtherMessage" = "“屏蔽其他内容拦截器”可能影响某些视频和网页。";
+"Settings.blockOtherMessage" = "拦截其他内容跟踪器可能对某些视频和网页有影响。";
 
 /* Button label for declining Content blocker alert */
 "Settings.blockOtherNo" = "不用了";
 
 /* Button label for accepting Content blocker alert */
-"Settings.blockOtherYes" = "我已了解";
+"Settings.blockOtherYes" = "知道了";
+
+/* Description associated to the Send Usage Data toggle on main screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextSendUsageData" = "Mozilla 仅收集必要的信息用以改进 %@ 以适合大众。";
+
+/* Subtitle for Send Anonymous Usage Data toggle on main screen */
+"Settings.learnMore" = "详细了解。";
 
 /* Title for settings screen */
 "Settings.screenTitle" = "设置";
@@ -134,7 +158,7 @@
 "Settings.searchTitle" = "搜索引擎";
 
 /* Label for Safari integration section */
-"Settings.sectionIntegration" = "整合";
+"Settings.sectionIntegration" = "集成";
 
 /* Section label for Mozilla toggles */
 "Settings.sectionMozilla" = "MOZILLA";
@@ -146,37 +170,55 @@
 "Settings.sectionPrivacy" = "隐私";
 
 /* Label for toggle on main screen */
-"Settings.toggleBlockAds" = "屏蔽广告跟踪器";
+"Settings.toggleBlockAds" = "拦截广告跟踪器";
+
+/* Description for 'Block ad Trackers' */
+"Settings.toggleBlockAdsDescription" = "一些广告跟踪您的访问，即便您没有点击广告";
 
 /* Label for toggle on main screen */
-"Settings.toggleBlockAnalytics" = "屏蔽分析跟踪器";
+"Settings.toggleBlockAnalytics" = "拦截分析跟踪器";
+
+/* Description for 'Block analytics Trackers' */
+"Settings.toggleBlockAnalyticsDescription" = "会收集、分析和测量您的活动，例如点击与滚动";
 
 /* Label for toggle on main screen */
-"Settings.toggleBlockFonts" = "屏蔽网络字体";
+"Settings.toggleBlockFonts" = "拦截网络字体";
 
 /* Label for toggle on main screen */
-"Settings.toggleBlockOther" = "屏蔽其他内容跟踪器";
+"Settings.toggleBlockOther" = "拦截其他内容跟踪器";
+
+/* Description for 'Block other content Trackers' */
+"Settings.toggleBlockOtherDescription" = "启用可能导致部分网站工作异常";
 
 /* Label for toggle on main screen */
-"Settings.toggleBlockSocial" = "屏蔽社交跟踪器";
+"Settings.toggleBlockSocial" = "拦截社交跟踪器";
+
+/* Description for 'Block social Trackers' */
+"Settings.toggleBlockSocialDescription" = "嵌入到网站上从而跟踪您的访问和显示分享按钮";
 
 /* Label subtitle for toggle on main screen */
-"Settings.toggleOtherSubtitle" = "可能影响某些视频和网页";
+"Settings.toggleOtherSubtitle" = "可能对某些网页与视频有影响";
 
 /* Safari toggle label on settings screen */
 "Settings.toggleSafari" = "Safari";
 
-/* Label for Send Anonymous Usage Data toggle on main screen */
-"Settings.toggleSendAnonymousUsageData" = "发送匿名使用统计";
+/* Label for Send Usage Data toggle on main screen */
+"Settings.toggleSendUsageData" = "发送使用统计";
 
-/* Subtitle for Send Anonymous Usage Data toggle on main screen */
-"Settings.toggleSendAnonymousUsageDataSubtitle" = "详细了解";
+/* Text for the share menu option when a user wants to open a page in Firefox but doesn’t have it installed. This string will not wrap in the interface. Instead, it will truncate. To prevent this, please keep the localized string to 18 or fewer characters. If your string runs longer than 18 characters, you can use 'Get Firefox' as the basis for your string. However, if at all possible, we’d like to signal to the user that they will be going to the App Store and installing the application from there. That is why we are using Get and App in the en-US string. */
+"ShareMenu.GetFirefox" = "获取 Firefox 应用";
+
+/* Text for the share menu option when a user wants to open a page in Focus. */
+"ShareMenu.OpenInFocus" = "在 %@ 中打开";
 
 /* Label for cancel button shown when entering a URL or search */
 "URL.cancelLabel" = "取消";
 
+/* Text for the URL context menu when a user long presses on the URL bar with clipboard contents. */
+"URL.contextMenu" = "粘贴并前往";
+
 /* Erase button in the URL bar */
-"URL.eraseButtonLabel" = "擦除";
+"URL.eraseButtonLabel" = "清除";
 
 /* Message shown after pressing the Erase button */
 "URL.eraseMessageLabel" = "您的浏览记录已清除。";
@@ -186,4 +228,64 @@
 
 /* Label displayed for search button when typing in the URL bar */
 "URL.searchLabel" = "搜索 %@";
+
+/* Text for the URL bar showing the number of trackers blocked on a webpage. */
+"URL.trackersBlockedLabel" = "跟踪器已阻止";
+
+/* Title for action sheet item to open the current page in another application. Placeholder is the name of the application to open the current page. */
+"actionSheet.openIn" = "在 %@ 中打开";
+
+/* Label to display in the Discoverability overlay for keyboard shortcuts */
+"browserShortcutDescription.selectLocationBar" = "选择地址栏";
+
+/* Text for the context menu when a user has a link on their clipboard. */
+"contextMenu.clipboardLink" = "已复制链接：%@";
+
+/* Text for the context menu when a user wants to copy an image after long pressing it. */
+"contextMenu.copyImageTitle" = "复制图像";
+
+/* Text for the context menu when a user wants to copy a link after long pressing it. */
+"contextMenu.copyLink" = "复制链接";
+
+/* Text for the context menu when a user wants to save an image after long pressing it. */
+"contextMenu.saveImageTitle" = "保存图像";
+
+/* Text for the context menu when a user wants to share a link after long pressing it. */
+"contextMenu.shareLinkTitle" = "分享链接";
+
+/* Dialog title used for opening an external app from Focus. First placeholder string is the app name of either Focus or Klar and the second placeholder string specifies the app it wants to open. */
+"externalAppLinkWithAppName.messageTitle" = "%1$@ 想打开 %2$@";
+
+/* Description for dialog used for requesting a user to enable access to Photos. */
+"photosPermission.description" = "这让您可以将图像保存到您的相机胶卷";
+
+/* Title for button that takes the user to system settings */
+"photosPermission.openSettings" = "打开设置";
+
+/* Dialog title used for requesting a user to enable access to Photos. Placeholder is either Firefox Focus or Firefox Klar */
+"photosPermission.title" = "“%@”想要访问您的照片";
+
+/* Label for ad trackers. */
+"trackingProtection.adTrackersLabel" = "广告跟踪器";
+
+/* label for analytic trackers. */
+"trackingProtection.analyticTrackerLabel" = "分析跟踪器";
+
+/* label for content trackers. */
+"trackingProtection.contentTrackerLabel" = "内容跟踪器";
+
+/* text showing the tracking protection is disabled. */
+"trackingProtection.disabledLabel" = "关闭追踪保护";
+
+/* label for social trackers. */
+"trackingProtection.socialTrackerLabel" = "社交跟踪器";
+
+/* Description for the tracking protection toggle. Placeholder is either Firefox Focus or Firefox Klar */
+"trackingProtection.toggleDescription1" = "禁用至您关闭 %@ 或按“清除”。";
+
+/* Text for the toggle that temporarily disables tracking protection. */
+"trackingProtection.toggleLabel" = "跟踪保护";
+
+/* General description of tracking protection settings, which is displayed underneath the trackers preferences in Settings. Placeholder is either Firefox Focus or Firefox Klar */
+"trackingProtection.trackerDescriptionLabel" = "选择 %@ 是否拦截广告、分析、社交及其他跟踪器。";
 

@@ -1,0 +1,252 @@
+/* Button on About screen */
+"About.learnMoreButton" = "Μάθετε περισσότερα";
+
+/* Label on About screen */
+"About.missionLabel" = "Το %@ δημιουργήθηκε από τη Mozilla. Η αποστολή μας είναι να προαγάγουμε ένα υγιές, ανοιχτό διαδίκτυο.";
+
+/* Label on About screen */
+"About.privateBullet1" = "Αναζητήστε και περιηγηθείτε εντός της εφαρμογής";
+
+/* Label on About screen */
+"About.privateBullet2" = "Αποκλείστε trackers (ή ενημερώστε τις ρυθμίσεις σας ώστε να επιτρέπονται)";
+
+/* Label on About screen */
+"About.privateBullet3" = "Διαγράψτε τα cookies, καθώς και το ιστορικό αναζητήσεων και περιήγησης";
+
+/* Label on About screen */
+"About.privateBulletHeader" = "Χρησιμοποιήστε το ως πρόγραμμα ιδιωτικής περιήγησης:";
+
+/* Label for row in About screen */
+"About.rowHelp" = "Βοήθεια";
+
+/* Link to Privacy Notice in the About screen */
+"About.rowPrivacy" = "Σημείωση απορρήτου";
+
+/* Label for row in About screen */
+"About.rowRights" = "Τα δικαιώματά σας";
+
+/* Label on About screen */
+"About.safariBullet1" = "Αποκλείστε trackers για βελτιωμένο απόρρητο";
+
+/* Label on About screen */
+"About.safariBullet2" = "Αποκλείστε τις γραμματοσειρές ιστού για μείωση μεγέθους σελίδας";
+
+/* Label on About screen */
+"About.safariBulletHeader" = "Χρησιμοποιήστε το ως επέκταση του Safari:";
+
+/* Title for the About screen */
+"About.screenTitle" = "Πληροφορίες";
+
+/* Label on About screen */
+"About.topLabel" = "Το %@ σάς δίνει τον έλεγχο.";
+
+/* Accessibility label for the back button */
+"Browser.backLabel" = "Πίσω";
+
+/* Accessibility label for the forward button */
+"Browser.forwardLabel" = "Εμπρός";
+
+/* Accessibility label for the reload button */
+"Browser.reloadLabel" = "Ανανέωση";
+
+/* Accessibility label for the settings button */
+"Browser.settingsLabel" = "Ρυθμίσεις";
+
+/* Accessibility label for the share button */
+"Browser.shareLabel" = "Κοινή χρήση";
+
+/* Accessibility label for the stop button */
+"Browser.stopLabel" = "Διακοπή";
+
+/* Button label to reload the error page */
+"Error.tryAgainButton" = "Δοκιμάστε ξανά";
+
+/* Button label used for cancelling to open another app from Focus */
+"ExternalAppLink.cancelTitle" = "Ακύρωση";
+
+/* Dialog title used for opening an external app from Focus. The placeholder string is the app name of either Focus or Klar. */
+"ExternalAppLink.messageTitle" = "Το %@ θέλει να ανοίξει μια άλλη εφαρμογή";
+
+/* Button label for opening another app from Focus */
+"ExternalAppLink.openTitle" = "Άνοιγμα";
+
+/* Button label in tel: dialog to call a phone number. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.callButton" = "Κλήση";
+
+/* Button label in external link dialog to cancel the dialog. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.cancelButton" = "Ακύρωση";
+
+/* Button label in mailto: dialog to send an email. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.emailButton" = "Email";
+
+/* Dialog title used for Maps/App Store links. The placeholder is replaced with the application name, which can be either Firefox Focus or Firefox Klar. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.messageTitleWithPlaceholder" = "Πρόκειται να αποχωρήσετε από το %@.";
+
+/* Button label in App Store URL dialog to open the App Store. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.openAppStoreButton" = "Άνοιγμα App Store";
+
+/* Dialog title used to open App Store links. The placeholder is replaced with the application name, which can be either Firefox Focus or Firefox Klar. */
+"ExternalLink.openAppStoreTitle" = "Το %@ θέλει να ανοίξει το App Store.";
+
+/* Button label in Maps URL dialog to open Maps. Test page: https://people-mozilla.org/~bnicholson/test/schemes.html */
+"ExternalLink.openMapsButton" = "Άνοιγμα Χαρτών";
+
+/* Label on button to dismiss first run UI */
+"FirstRun.buttonLabel" = "OK, ΤΟ 'ΠΙΑΣΑ!";
+
+/* Message label on the first run screen */
+"FirstRun.messageLabelDescription" = "Αποκλείστε αυτόματα τα διαδικτυακά trackers όσο περιηγείστε. Έπειτα, πατήστε για διαγραφή του ιστορικού, των αναζητήσεων, των cookies και των κωδικών πρόσβασης από τη συσκευή σας.";
+
+/* Message label on the first run screen */
+"FirstRun.messageLabelTagline" = "Περιηγηθείτε σαν να μην σάς βλέπει κανείς.";
+
+/* Title for the loading screen when the handoff of clipboard delays Focus launch. “Handoff” should not be localized, see https://support.apple.com/HT204681 */
+"Focus.handoffSyncing" = "Το Apple Handoff συγχρονίζεται";
+
+/* First label for product description on the home screen */
+"Home.descriptionLabel1" = "Αυτόματη ιδιωτική περιήγηση.";
+
+/* Second label for product description on the home screen */
+"Home.descriptionLabel2" = "Περιηγηθείτε. Διαγράψτε. Επαναλάβετε.";
+
+/* Label in share alert to cancel the alert */
+"Open.Cancel" = "Ακύρωση";
+
+/* Label in share alert to open the URL in Firefox */
+"Open.Firefox" = "Firefox (Ιδιωτική περιήγηση)";
+
+/* Label in share alert to open the full system share menu */
+"Open.More" = "Περισσότερα";
+
+/* Label in share alert to open the URL in Safari */
+"Open.Safari" = "Safari";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsContentBlockers" = "Πατήστε το Safari και, έπειτα, επιλέξτε Προγράμματα αποκλεισμού περιεχομένου";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsEnable" = "Ενεργοποίηση στο %@";
+
+/* Error label when the blocker is not enabled, shown in the intro and main app when disabled */
+"Safari.instructionsNotEnabled" = "Το %@ δεν είναι ενεργό.";
+
+/* Label for instructions to enable Safari, shown when enabling Safari Integration in Settings */
+"Safari.instructionsOpen" = "Άνοιγμα εφαρμογής \"Ρυθμίσεις\"";
+
+/* Alert message shown when toggling the Content blocker */
+"Settings.blockOtherMessage" = "Η φραγή των trackers άλλου περιεχομένου ενδέχεται να χαλάσει μερικά βίντεο και ιστοσελίδες.";
+
+/* Button label for declining Content blocker alert */
+"Settings.blockOtherNo" = "Όχι, ευχαριστώ";
+
+/* Button label for accepting Content blocker alert */
+"Settings.blockOtherYes" = "Καταλαβαίνω";
+
+/* Description associated to the Send Usage Data toggle on main screen. %@ is the app name (Focus/Klar) */
+"Settings.detailTextSendUsageData" = "Η Mozilla αγωνίζεται για να συλλέγει μόνο ό,τι χρειάζεται για να παρέχει και να βελτιώνει το %@ για όλους.";
+
+/* Subtitle for Send Anonymous Usage Data toggle on main screen */
+"Settings.learnMore" = "Μάθετε περισσότερα.";
+
+/* Title for settings screen */
+"Settings.screenTitle" = "Ρυθμίσεις";
+
+/* Title for the search engine row */
+"Settings.searchSection" = "ΜΗΧΑΝΗ ΑΝΑΖΗΤΗΣΗΣ";
+
+/* Title for the search engine selection screen */
+"Settings.searchTitle" = "Μηχανή αναζήτησης";
+
+/* Label for Safari integration section */
+"Settings.sectionIntegration" = "ΕΝΣΩΜΑΤΩΣΗ";
+
+/* Section label for Mozilla toggles */
+"Settings.sectionMozilla" = "MOZILLA";
+
+/* Section label for performance toggles */
+"Settings.sectionPerformance" = "ΑΠΟΔΟΣΗ";
+
+/* Section label for privacy toggles */
+"Settings.sectionPrivacy" = "ΑΠΟΡΡΗΤΟ";
+
+/* Label for toggle on main screen */
+"Settings.toggleBlockAds" = "Φραγή trackers διαφημίσεων";
+
+/* Label for toggle on main screen */
+"Settings.toggleBlockAnalytics" = "Φραγή trackers αναλύσεων";
+
+/* Label for toggle on main screen */
+"Settings.toggleBlockFonts" = "Φραγή γραμματοσειρών ιστού";
+
+/* Label for toggle on main screen */
+"Settings.toggleBlockOther" = "Φραγή trackers άλλου περιεχομένου";
+
+/* Label for toggle on main screen */
+"Settings.toggleBlockSocial" = "Φραγή κοινωνικών trackers";
+
+/* Label subtitle for toggle on main screen */
+"Settings.toggleOtherSubtitle" = "Ενδέχεται να χαλάσει μερικά βίντεο και ιστοσελίδες";
+
+/* Safari toggle label on settings screen */
+"Settings.toggleSafari" = "Safari";
+
+/* Label for Send Usage Data toggle on main screen */
+"Settings.toggleSendUsageData" = "Αποστολή δεδομένων χρήσης";
+
+/* Text for the share menu option when a user wants to open a page in Firefox but doesn’t have it installed. This string will not wrap in the interface. Instead, it will truncate. To prevent this, please keep the localized string to 18 or fewer characters. If your string runs longer than 18 characters, you can use 'Get Firefox' as the basis for your string. However, if at all possible, we’d like to signal to the user that they will be going to the App Store and installing the application from there. That is why we are using Get and App in the en-US string. */
+"ShareMenu.GetFirefox" = "Λήψη του Firefox";
+
+/* Text for the share menu option when a user wants to open a page in Focus. */
+"ShareMenu.OpenInFocus" = "Άνοιγμα στο %@";
+
+/* Label for cancel button shown when entering a URL or search */
+"URL.cancelLabel" = "Ακύρωση";
+
+/* Text for the URL context menu when a user long presses on the URL bar with clipboard contents. */
+"URL.contextMenu" = "Επικόλληση & μετάβαση";
+
+/* Erase button in the URL bar */
+"URL.eraseButtonLabel" = "ΔΙΑΓΡΑΦΗ";
+
+/* Message shown after pressing the Erase button */
+"URL.eraseMessageLabel" = "Το ιστορικό περιήγησής σας έχει εκκαθαριστεί.";
+
+/* Placeholder text shown in the URL bar before the user navigates to a page */
+"URL.placeholderText" = "Αναζήτηση ή πληκτρολόγηση διεύθυνσης";
+
+/* Label displayed for search button when typing in the URL bar */
+"URL.searchLabel" = "Αναζήτηση για %@";
+
+/* Text for the URL bar showing the number of trackers blocked on a webpage. */
+"URL.trackersBlockedLabel" = "Αποκλείστηκαν ιχνηλάτες";
+
+/* Title for action sheet item to open the current page in another application. Placeholder is the name of the application to open the current page. */
+"actionSheet.openIn" = "Άνοιγμα σε %@";
+
+/* Text for the context menu when a user has a link on their clipboard. */
+"contextMenu.clipboardLink" = "Αντιγραμμένος σύνδεσμος: %@";
+
+/* Text for the context menu when a user wants to copy an image after long pressing it. */
+"contextMenu.copyImageTitle" = "Αντιγραφή εικόνας";
+
+/* Text for the context menu when a user wants to copy a link after long pressing it. */
+"contextMenu.copyLink" = "Αντιγραφή συνδέσμου";
+
+/* Text for the context menu when a user wants to save an image after long pressing it. */
+"contextMenu.saveImageTitle" = "Αποθήκευση εικόνας";
+
+/* Text for the context menu when a user wants to share a link after long pressing it. */
+"contextMenu.shareLinkTitle" = "Κοινή χρήση συνδέσμου";
+
+/* Dialog title used for opening an external app from Focus. First placeholder string is the app name of either Focus or Klar and the second placeholder string specifies the app it wants to open. */
+"externalAppLinkWithAppName.messageTitle" = "Το %1$@ θέλει να ανοίξει το %2$@";
+
+/* Description for dialog used for requesting a user to enable access to Photos. */
+"photosPermission.description" = "Αυτό σάς επιτρέπει να αποθηκεύετε εικόνες στο Άλμπουμ κάμερας";
+
+/* Title for button that takes the user to system settings */
+"photosPermission.openSettings" = "Άνοιγμα ρυθμίσεων";
+
+/* Dialog title used for requesting a user to enable access to Photos. Placeholder is either Firefox Focus or Firefox Klar */
+"photosPermission.title" = "Το “%@” θα ήθελε πρόσβαση στις φωτογραφίες σας";
+

@@ -5,7 +5,9 @@
 import XCTest
 
 class BaseTestCase: XCTestCase {
-        
+    
+    let app = XCUIApplication()
+    
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
@@ -25,15 +27,41 @@ class BaseTestCase: XCTestCase {
         }
     }
     
-    func waitforExistence(element: XCUIElement, file: String = #file, line: UInt = #line) {
-        let exists = NSPredicate(format: "exists == true")
+    func waitforEnable(element: XCUIElement, file: String = #file, line: UInt = #line) {
+        let exists = NSPredicate(format: "isEnabled == true")
         
         expectation(for: exists, evaluatedWith: element, handler: nil)
         waitForExpectations(timeout: 20) {(error) -> Void in
             if (error != nil) {
                 let message = "Failed to find \(element) after 20 seconds."
                 self.recordFailure(withDescription: message,
-                                   inFile: file, atLine: line, expected: true)
+                                   inFile: file, atLine: Int(line), expected: true)
+            }
+        }
+    }
+    
+    func waitforExistence(element: XCUIElement, file: String = #file, line: UInt = #line) {
+        let exists = NSPredicate(format: "exists == true")
+        
+        expectation(for: exists, evaluatedWith: element, handler: nil)
+        waitForExpectations(timeout: 30) {(error) -> Void in
+            if (error != nil) {
+                let message = "Failed to find \(element) after 30 seconds."
+                self.recordFailure(withDescription: message,
+                                   inFile: file, atLine: Int(line), expected: true)
+            }
+        }
+    }
+    
+    func waitforHittable(element: XCUIElement, file: String = #file, line: UInt = #line) {
+        let exists = NSPredicate(format: "isHittable == true")
+        
+        expectation(for: exists, evaluatedWith: element, handler: nil)
+        waitForExpectations(timeout: 30) {(error) -> Void in
+            if (error != nil) {
+                let message = "Failed to find \(element) after 30 seconds."
+                self.recordFailure(withDescription: message,
+                                   inFile: file, atLine: Int(line), expected: true)
             }
         }
     }
@@ -46,7 +74,7 @@ class BaseTestCase: XCTestCase {
             if (error != nil) {
                 let message = "\(element) still exists after 10 seconds."
                 self.recordFailure(withDescription: message,
-                                   inFile: file, atLine: line, expected: true)
+                                   inFile: file, atLine: Int(line), expected: true)
             }
         }
     }
@@ -60,7 +88,7 @@ class BaseTestCase: XCTestCase {
             if (error != nil) {
                 let message = "Failed to find \(element) after 20 seconds."
                 self.recordFailure(withDescription: message,
-                                   inFile: file, atLine: line, expected: true)
+                                   inFile: file, atLine: Int(line), expected: true)
             }
         }
     }
@@ -74,8 +102,36 @@ class BaseTestCase: XCTestCase {
             if (error != nil) {
                 let message = "Failed to find \(element) after 30 seconds."
                 self.recordFailure(withDescription: message,
-                                   inFile: file, atLine: line, expected: true)
+                                   inFile: file, atLine: Int(line), expected: true)
             }
         }
+    }
+    
+    func iPad() -> Bool {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            return true
+        }
+        return false
+    }
+    
+    func loadWebPage(_ url: String, waitForLoadToFinish: Bool = true) {
+        let app = XCUIApplication()
+        let searchOrEnterAddressTextField = app.textFields["Search or enter address"]
+        
+        searchOrEnterAddressTextField.typeText(url + "\n")
+        
+        if waitForLoadToFinish {
+            waitForWebPageLoad()
+        }
+    }
+    
+    func waitForWebPageLoad () {
+        let app = XCUIApplication()
+        let finishLoadingTimeout: TimeInterval = 30
+        let progressIndicator = app.progressIndicators.element(boundBy: 0)
+        waitforExistence(element: progressIndicator)
+        expectation(for: NSPredicate(format: "exists = true"), evaluatedWith: progressIndicator, handler: nil)
+        expectation(for: NSPredicate(format: "value BEGINSWITH '0'"), evaluatedWith: progressIndicator, handler: nil)
+        waitForExpectations(timeout: finishLoadingTimeout, handler: nil)
     }
 }

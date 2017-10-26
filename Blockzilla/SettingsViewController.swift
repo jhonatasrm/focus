@@ -8,24 +8,25 @@ import UIKit
 import Telemetry
 
 class SettingsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
-    fileprivate let tableView = UITableView()
+    fileprivate let tableView = UITableView(frame: .zero, style: .grouped)
 
     // Hold a strong reference to the block detector so it isn't deallocated
     // in the middle of its detection.
     private let detector = BlockerEnabledDetector.makeInstance()
 
     private var isSafariEnabled = false
-    private let waveView = WaveView()
     private let searchEngineManager: SearchEngineManager
-
+    private var highlightsButton: UIBarButtonItem?
+    private let whatsNew: WhatsNewDelegate
+    
     private let toggles = [
         BlockerToggle(label: UIConstants.strings.toggleSafari, setting: SettingsToggle.safari),
-        BlockerToggle(label: UIConstants.strings.labelBlockAds, setting: SettingsToggle.blockAds),
-        BlockerToggle(label: UIConstants.strings.labelBlockAnalytics, setting: SettingsToggle.blockAnalytics),
-        BlockerToggle(label: UIConstants.strings.labelBlockSocial, setting: SettingsToggle.blockSocial),
-        BlockerToggle(label: UIConstants.strings.labelBlockOther, setting: SettingsToggle.blockOther, subtitle: UIConstants.strings.settingsToggleOtherSubtitle),
+        BlockerToggle(label: UIConstants.strings.labelBlockAds, setting: SettingsToggle.blockAds, subtitle: UIConstants.strings.labelBlockAdsDescription),
+        BlockerToggle(label: UIConstants.strings.labelBlockAnalytics, setting: SettingsToggle.blockAnalytics, subtitle: UIConstants.strings.labelBlockAnalyticsDescription),
+        BlockerToggle(label: UIConstants.strings.labelBlockSocial, setting: SettingsToggle.blockSocial, subtitle: UIConstants.strings.labelBlockSocialDescription),
+        BlockerToggle(label: UIConstants.strings.labelBlockOther, setting: SettingsToggle.blockOther, subtitle: UIConstants.strings.labelBlockOtherDescription),
         BlockerToggle(label: UIConstants.strings.labelBlockFonts, setting: SettingsToggle.blockFonts),
-        BlockerToggle(label: UIConstants.strings.labelSendAnonymousUsageData, setting: SettingsToggle.sendAnonymousUsageData, subtitle: UIConstants.strings.subtitleSendAnonymousUsageData),
+        BlockerToggle(label: UIConstants.strings.labelSendAnonymousUsageData, setting: SettingsToggle.sendAnonymousUsageData),
     ]
 
     /// Used to calculate cell heights.
@@ -35,8 +36,9 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
         return cell
     }()
 
-    init(searchEngineManager: SearchEngineManager) {
+    init(searchEngineManager: SearchEngineManager, whatsNew: WhatsNewDelegate) {
         self.searchEngineManager = searchEngineManager
+        self.whatsNew = whatsNew
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -53,11 +55,16 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
         navigationBar.isTranslucent = false
         navigationBar.barTintColor = UIConstants.colors.background
         navigationBar.tintColor = UIConstants.colors.navigationButton
-        navigationBar.titleTextAttributes = [NSForegroundColorAttributeName: UIConstants.colors.navigationTitle]
+        navigationBar.titleTextAttributes = [NSAttributedStringKey.foregroundColor: UIConstants.colors.navigationTitle]
 
-        let aboutButton = UIBarButtonItem(title: UIConstants.strings.aboutTitle, style: .plain, target: self, action: #selector(aboutClicked))
-        aboutButton.accessibilityIdentifier = "SettingsViewController.aboutButton"
-        navigationItem.rightBarButtonItem = aboutButton
+        highlightsButton = UIBarButtonItem(title: UIConstants.strings.whatsNewTitle, style: .plain, target: self, action: #selector(whatsNewClicked))
+        highlightsButton?.image = UIImage(named: "highlight")
+        highlightsButton?.accessibilityIdentifier = "SettingsViewController.whatsNewButton"
+        navigationItem.rightBarButtonItem = highlightsButton
+        
+        if whatsNew.shouldShowWhatsNew() {
+            highlightsButton?.tintColor = UIConstants.colors.settingsLink
+        }
 
         view.addSubview(tableView)
         tableView.snp.makeConstraints { make in
@@ -71,7 +78,6 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
         tableView.separatorColor = UIConstants.colors.settingsSeparator
         tableView.allowsSelection = true
         tableView.estimatedRowHeight = 44
-        tableView.tableFooterView = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: 44))
 
         toggles.forEach { blockerToggle in
             let toggle = blockerToggle.toggle
@@ -103,36 +109,72 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
 
     fileprivate func toggleForIndexPath(_ indexPath: IndexPath) -> BlockerToggle {
         var index = (indexPath as NSIndexPath).row
-        for i in 2..<(indexPath as NSIndexPath).section {
+        for i in 1..<(indexPath as NSIndexPath).section {
             index += tableView.numberOfRows(inSection: i)
         }
         return toggles[index]
     }
 
+    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        if section == 4 {
+            let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
+            let learnMore = NSAttributedString(string: UIConstants.strings.learnMore, attributes: [NSAttributedStringKey.foregroundColor : UIConstants.colors.toggleOn])
+            let subtitle = NSMutableAttributedString(string: String(format: UIConstants.strings.detailTextSendUsageData, AppInfo.productName), attributes: [NSAttributedStringKey.foregroundColor : UIConstants.colors.settingsDetailLabel])
+            let space = NSAttributedString(string: " ", attributes: [NSAttributedStringKey.foregroundColor : UIConstants.colors.toggleOn])
+            subtitle.append(space)
+            subtitle.append(learnMore)
+            cell.detailTextLabel?.attributedText = subtitle
+            cell.detailTextLabel?.numberOfLines = 0
+            cell.accessibilityIdentifier = "SettingsViewController.learnMoreCell"
+            cell.selectionStyle = .none
+            cell.backgroundColor = UIConstants.colors.background
+            cell.layoutMargins = UIEdgeInsets.zero
+
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tappedLearnMoreFooter))
+            cell.addGestureRecognizer(tapGesture)
+
+            return cell
+        }
+        return nil
+    }
+
+    @objc func tappedLearnMoreFooter(gestureRecognizer: UIGestureRecognizer) {
+        guard let url = SupportUtils.URLForTopic(topic: "usage-data") else { return }
+        let contentViewController = AboutContentViewController(url: url)
+        navigationController?.pushViewController(contentViewController, animated: true)
+    }
+
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return section == 4 ? 50 : 0
+    }
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell: UITableViewCell
+        var cell: UITableViewCell
         switch (indexPath as NSIndexPath).section {
         case 0:
-            cell = UITableViewCell(style: .subtitle, reuseIdentifier: "waveCell")
-            cell.contentView.addSubview(waveView)
-            cell.selectionStyle = .none
-            waveView.snp.makeConstraints { make in
-                make.edges.equalTo(cell)
-            }
-        case 1:
             cell = UITableViewCell(style: .subtitle, reuseIdentifier: "searchCell")
             cell.textLabel?.text = searchEngineManager.activeEngine.name
             cell.accessoryType = .disclosureIndicator
             cell.accessibilityIdentifier = "SettingsViewController.searchCell"
+
+            let backgroundColorView = UIView()
+            backgroundColorView.backgroundColor = UIConstants.colors.cellSelected
+            cell.selectedBackgroundView = backgroundColorView
         default:
-            cell = UITableViewCell(style: .subtitle, reuseIdentifier: "toggleCell")
-            let toggle = toggleForIndexPath(indexPath)
-            cell.textLabel?.text = toggle.label
-            cell.textLabel?.numberOfLines = 0
-            cell.accessoryView = PaddedSwitch(switchView: toggle.toggle)
-            cell.detailTextLabel?.text = toggle.subtitle
-            cell.detailTextLabel?.numberOfLines = 0
-            cell.selectionStyle = .none
+            if indexPath.section == 4 && indexPath.row == 1 {
+                cell = UITableViewCell(style: .subtitle, reuseIdentifier: "aboutCell")
+                cell.textLabel?.text = UIConstants.strings.aboutTitle
+                cell.accessibilityIdentifier = "settingsViewController.about"
+            } else {
+                cell = UITableViewCell(style: .subtitle, reuseIdentifier: "toggleCell")
+                let toggle = toggleForIndexPath(indexPath)
+                cell.textLabel?.text = toggle.label
+                cell.textLabel?.numberOfLines = 0
+                cell.accessoryView = PaddedSwitch(switchView: toggle.toggle)
+                cell.detailTextLabel?.text = toggle.subtitle
+                cell.detailTextLabel?.numberOfLines = 0
+                cell.selectionStyle = .none
+            }
         }
 
         cell.backgroundColor = UIConstants.colors.background
@@ -145,12 +187,11 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
-        case 0: return 1 // Wave view.
-        case 1: return 1 // Search Engine.
-        case 2: return 1 // Integration.
-        case 3: return 4 // Privacy.
-        case 4: return 1 // Performance.
-        case 5: return 1 // Mozilla.
+        case 0: return 1 // Search Engine.
+        case 1: return 1 // Integration.
+        case 2: return 4 // Privacy.
+        case 3: return 1 // Performance.
+        case 4: return 2 // Mozilla.
         default:
             assertionFailure("Invalid section")
             return 0
@@ -158,17 +199,12 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
     }
 
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 6
+        return 5
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        // Height for the wave.
-        if indexPath.section == 0 {
-            return 200
-        }
-
-        // Height for the Search Engine row.
-        if indexPath.section == 1 {
+        // Height for the Search Engine and Learn More row.
+        if indexPath.section == 0 || (indexPath.section == 4 && indexPath.row == 1) {
             return 44
         }
 
@@ -190,20 +226,22 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
 
     private func heightForLabel(_ label: UILabel, width: CGFloat, text: String) -> CGFloat {
         let size = CGSize(width: width, height: CGFloat.greatestFiniteMagnitude)
-        let attrs: [String: Any] = [NSFontAttributeName: label.font]
+        let attrs: [NSAttributedStringKey: Any] = [.font: label.font]
         let boundingRect = NSString(string: text).boundingRect(with: size, options: NSStringDrawingOptions.usesLineFragmentOrigin, attributes: attrs, context: nil)
         return boundingRect.height
     }
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let labelText: String
-
+        var groupingOffset = 16
         switch section {
-        case 1: labelText = UIConstants.strings.settingsSearchSection
-        case 2: labelText = UIConstants.strings.toggleSectionIntegration
-        case 3: labelText = UIConstants.strings.toggleSectionPrivacy
-        case 4: labelText = UIConstants.strings.toggleSectionPerformance
-        case 5: labelText = UIConstants.strings.toggleSectionMozilla
+        case 0:
+            labelText = UIConstants.strings.settingsSearchSection
+            groupingOffset = 3
+        case 1: labelText = UIConstants.strings.toggleSectionIntegration
+        case 2: labelText = UIConstants.strings.toggleSectionPrivacy
+        case 3: labelText = UIConstants.strings.toggleSectionPerformance
+        case 4: labelText = UIConstants.strings.toggleSectionMozilla
         default: return nil
         }
 
@@ -222,35 +260,42 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
 
         label.snp.makeConstraints { make in
             make.leading.trailing.equalTo(cell.textLabel!)
-            make.centerY.equalTo(cell.textLabel!).offset(10)
+            make.centerY.equalTo(cell.textLabel!).offset(groupingOffset)
+        }
+
+        // Hack to cover header separator line
+        let footer = UIView()
+        footer.backgroundColor = UIConstants.colors.background
+
+        cell.addSubview(footer)
+        cell.sendSubview(toBack: footer)
+
+        footer.snp.makeConstraints { make in
+            make.height.equalTo(1)
+            make.bottom.equalToSuperview().offset(1)
+            make.leading.trailing.equalToSuperview()
         }
 
         return cell
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        switch section {
-        case 1: fallthrough
-        case 2: fallthrough
-        case 3: fallthrough
-        case 4: fallthrough
-        case 5: return 30
-        default: return 0
-        }
+        return section != 0 ? 50 : 30
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
 
         switch indexPath.section {
-        case 1:
+        case 0:
             let searchSettingsViewController = SearchSettingsViewController(searchEngineManager: searchEngineManager)
             searchSettingsViewController.delegate = self
             navigationController?.pushViewController(searchSettingsViewController, animated: true)
-        case 5:
-            guard let url = SupportUtils.URLForTopic(topic: "usage-data") else { break }
-            let contentViewController = AboutContentViewController(url: url)
-            navigationController?.pushViewController(contentViewController, animated: true)
+            break
+        case 4:
+            if indexPath.row == 1 {
+                aboutClicked()
+            }
         default: break
         }
     }
@@ -270,6 +315,15 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
     @objc private func aboutClicked() {
         navigationController!.pushViewController(AboutViewController(), animated: true)
     }
+    
+    @objc private func whatsNewClicked() {
+        highlightsButton?.tintColor = UIColor.white
+        
+        guard let url = SupportUtils.URLForTopic(topic: "whats-new-focus-ios-3") else { return }
+        navigationController?.pushViewController(AboutContentViewController(url: url), animated: true)
+        
+        whatsNew.didShowWhatsNew()
+    }
 
     @objc private func toggleSwitched(_ sender: UISwitch) {
         let toggle = toggles.filter { $0.toggle == sender }.first!
@@ -280,8 +334,8 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
             Telemetry.default.recordEvent(telemetryEvent)
 
             Settings.set(sender.isOn, forToggle: toggle.setting)
+            ContentBlockerHelper.shared.reload()
             Utils.reloadSafariContentBlocker()
-            LocalContentBlocker.reload()
         }
 
         // First check if the user changed the anonymous usage data setting and follow that choice right
@@ -297,12 +351,12 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
             navigationController!.pushViewController(instructionsViewController, animated: true)
             updateSetting()
         case .blockOther where sender.isOn:
-            let alertController = UIAlertController(title: nil, message: UIConstants.strings.settingsBlockOtherMessage, preferredStyle: UIAlertControllerStyle.actionSheet)
-            alertController.addAction(UIAlertAction(title: UIConstants.strings.settingsBlockOtherYes, style: UIAlertActionStyle.destructive) { _ in
-                updateSetting()
-            })
+            let alertController = UIAlertController(title: nil, message: UIConstants.strings.settingsBlockOtherMessage, preferredStyle: .alert)
             alertController.addAction(UIAlertAction(title: UIConstants.strings.settingsBlockOtherNo, style: UIAlertActionStyle.default) { _ in
                 sender.isOn = false
+                updateSetting()
+            })
+            alertController.addAction(UIAlertAction(title: UIConstants.strings.settingsBlockOtherYes, style: UIAlertActionStyle.destructive) { _ in
                 updateSetting()
             })
             alertController.popoverPresentationController?.sourceView = sender
@@ -316,7 +370,7 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
 
 extension SettingsViewController: SearchSettingsViewControllerDelegate {
     func searchSettingsViewController(_ searchSettingsViewController: SearchSettingsViewController, didSelectEngine engine: SearchEngine) {
-        tableView.cellForRow(at: IndexPath(row: 0, section: 1))?.textLabel?.text = engine.name
+        tableView.cellForRow(at: IndexPath(row: 0, section: 0))?.textLabel?.text = engine.name
     }
 }
 

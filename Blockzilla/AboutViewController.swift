@@ -35,7 +35,7 @@ class AboutViewController: UIViewController, UITableViewDataSource, UITableViewD
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 3
+        return 4
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -48,6 +48,7 @@ class AboutViewController: UIViewController, UITableViewDataSource, UITableViewD
             }
         case 1: cell.textLabel?.text = UIConstants.strings.aboutRowHelp
         case 2: cell.textLabel?.text = UIConstants.strings.aboutRowRights
+        case 3: cell.textLabel?.text = UIConstants.strings.aboutRowPrivacy
         default: break
         }
 
@@ -92,6 +93,10 @@ class AboutViewController: UIViewController, UITableViewDataSource, UITableViewD
             let url = LocalWebServer.sharedInstance.URLForPath("/\(AppInfo.config.rightsFile)")!
             let contentViewController = AboutContentViewController(url: url)
             navigationController?.pushViewController(contentViewController, animated: true)
+        case 3:
+            let url = URL(string: "https://www.mozilla.org/privacy/firefox-focus")!
+            let contentViewController = AboutContentViewController(url: url)
+            navigationController?.pushViewController(contentViewController, animated: true)
         default: break
         }
 
@@ -123,7 +128,7 @@ private class AboutHeaderView: UIView {
         let bulletStyle = NSMutableParagraphStyle()
         bulletStyle.firstLineHeadIndent = 15
         bulletStyle.headIndent = 29.5
-        let bulletAttributes = [NSParagraphStyleAttributeName: bulletStyle]
+        let bulletAttributes = [NSAttributedStringKey.paragraphStyle: bulletStyle]
         let bulletFormat = "•  %@\n"
 
         let paragraph = [
@@ -158,7 +163,7 @@ private class AboutHeaderView: UIView {
 
         let learnMoreButton = UIButton()
         learnMoreButton.setTitle(UIConstants.strings.aboutLearnMoreButton, for: .normal)
-        learnMoreButton.setTitleColor(UIConstants.colors.focusBlue, for: .normal)
+        learnMoreButton.setTitleColor(UIConstants.colors.settingsLink, for: .normal)
         learnMoreButton.setTitleColor(UIConstants.colors.buttonHighlight, for: .highlighted)
         learnMoreButton.titleLabel?.font = UIConstants.fonts.aboutText
         learnMoreButton.addTarget(self, action: #selector(didPressLearnMore), for: .touchUpInside)

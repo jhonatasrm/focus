@@ -14,13 +14,11 @@ protocol OverlayViewDelegate: class {
 
 class OverlayView: UIView {
     weak var delegate: OverlayViewDelegate?
-    fileprivate let settingsButton = UIButton()
     private let searchButton = InsetButton()
     private let searchBorder = UIView()
-    private var bottomConstraint: Constraint!
     private var presented = false
     private var searchQuery = ""
-    private let copyButton = InsetButton()
+    private let copyButton = UIButton()
     private let copyBorder = UIView()
 
     init() {
@@ -48,10 +46,15 @@ class OverlayView: UIView {
             make.height.equalTo(1)
         }
         
-        copyButton.setImage(#imageLiteral(resourceName: "icon_paste"), for: .normal)
-        copyButton.setImage(#imageLiteral(resourceName: "icon_paste"), for: .highlighted)
         copyButton.titleLabel?.font = UIConstants.fonts.copyButton
-        setUpOverlayButton(button: copyButton)
+        let padding = UIConstants.layout.searchButtonInset
+        copyButton.titleEdgeInsets = UIEdgeInsets(top: padding, left: padding, bottom: padding, right: padding)
+        copyButton.titleLabel?.lineBreakMode = .byTruncatingTail
+        if UIView.userInterfaceLayoutDirection(for: copyButton.semanticContentAttribute) == .rightToLeft {
+            copyButton.contentHorizontalAlignment = .right
+        } else {
+            copyButton.contentHorizontalAlignment = .left
+        }
         copyButton.addTarget(self, action: #selector(didPressCopy), for: .touchUpInside)
         addSubview(copyButton)
         
@@ -60,22 +63,12 @@ class OverlayView: UIView {
         
         copyButton.snp.makeConstraints { make in
             make.top.leading.trailing.equalTo(self)
+            make.height.equalTo(56)
         }
         copyBorder.snp.makeConstraints { make in
             make.leading.trailing.equalTo(self)
             make.top.equalTo(copyButton.snp.bottom)
             make.height.equalTo(1)
-        }
-        
-        settingsButton.setImage(#imageLiteral(resourceName: "icon_settings"), for: .normal)
-        settingsButton.contentEdgeInsets = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
-        settingsButton.addTarget(self, action: #selector(didPressSettings), for: .touchUpInside)
-        settingsButton.accessibilityLabel = UIConstants.strings.browserSettings
-        addSubview(settingsButton)
-        
-        settingsButton.snp.makeConstraints { make in
-            make.trailing.equalTo(self)
-            bottomConstraint = make.bottom.equalTo(self).constraint
         }
     }
     required init?(coder aDecoder: NSCoder) {
@@ -97,71 +90,84 @@ class OverlayView: UIView {
             button.titleEdgeInsets = UIEdgeInsets(top: padding, left: padding * 2, bottom: padding, right: padding)
         }
     }
+    
+    /**
+     
+     Localize and style 'phrase' text for use as a button title.
+     
+     - Parameter phrase: The phrase text for a button title
+     - Parameter localizedStringFormat: The localization format string to apply
+     
+     - Returns: An NSAttributedString with `phrase` localized and styled appropriately.
+     
+     */
+    func getAttributedButtonTitle(phrase: String,
+                                  localizedStringFormat: String) -> NSAttributedString {
+        let attributedString = NSMutableAttributedString(string: localizedStringFormat, attributes: [NSAttributedStringKey.foregroundColor: UIColor.white])
+        let phraseString = NSAttributedString(string: phrase, attributes: [NSAttributedStringKey.font: UIConstants.fonts.copyButtonQuery,
+                                                                           NSAttributedStringKey.foregroundColor: UIColor.white])
+
+        guard let range = attributedString.string.range(of: "%@") else { return phraseString }
+
+        let replaceRange = NSRange(range, in: attributedString.string)
+        attributedString.replaceCharacters(in: replaceRange, with: phraseString)
+
+        return attributedString
+    }
+    
     func setAttributedButtonTitle(phrase: String, button: InsetButton) {
-        // Use [ and ] to help find the position of the query, then delete them.
-        let copyTitle = NSMutableString(string: String(format: UIConstants.strings.searchButton, "[\(phrase)]"))
-        let startIndex = copyTitle.range(of: "[")
-        let endIndex = copyTitle.range(of: "]")
-        copyTitle.deleteCharacters(in: endIndex)
-        copyTitle.deleteCharacters(in: startIndex)
         
-        let attributedString = NSMutableAttributedString(string: copyTitle as String)
-        let queryRange = NSMakeRange(startIndex.location, (phrase as NSString).length)
-        let fullRange = NSMakeRange(0, copyTitle.length)
-        attributedString.addAttributes([NSFontAttributeName: UIConstants.fonts.copyButtonQuery], range: queryRange)
-        attributedString.addAttributes([NSForegroundColorAttributeName: UIColor.white], range: fullRange)
+        let attributedString = getAttributedButtonTitle(phrase: phrase,
+                                                        localizedStringFormat: UIConstants.strings.searchButton)
         
         button.setAttributedTitle(attributedString, for: .normal)
     }
+    
     func setSearchQuery(query: String, animated: Bool) {
         searchQuery = query
         let query = query.trimmingCharacters(in: .whitespaces)
-        
-        if let pasteBoard = UIPasteboard.general.string {
-            if let pasteURL = URL(string: pasteBoard), pasteURL.isWebPage() {
-                let attributedURL = NSAttributedString(string: pasteURL.absoluteString, attributes: [NSForegroundColorAttributeName: UIColor.white])
-                    copyButton.setAttributedTitle(attributedURL, for: .normal)
-            }
-            else {
-                setAttributedButtonTitle(phrase: pasteBoard, button: copyButton)
+
+        var showCopyButton = false
+
+        UIPasteboard.general.urlAsync() { handoffUrl in
+            DispatchQueue.main.async {
+                if let url = handoffUrl, url.isWebPage() {
+                    self.copyButton.setAttributedTitle(NSAttributedString(string: String(format: UIConstants.strings.linkYouCopied, url.absoluteString), attributes: [NSAttributedStringKey.foregroundColor: UIColor.white]), for: .normal)
+                    showCopyButton = url.isWebPage()
+                }
+
+                // Show or hide the search button depending on whether there's entered text.
+                if self.searchButton.isHidden != query.isEmpty {
+                    let duration = animated ? UIConstants.layout.searchButtonAnimationDuration : 0
+                    self.searchButton.animateHidden(query.isEmpty, duration: duration)
+                    self.searchBorder.animateHidden(query.isEmpty, duration: duration)
+                }
+                self.setAttributedButtonTitle(phrase: query, button: self.searchButton)
+                self.updateCopyConstraint(showCopyButton: showCopyButton)
             }
         }
-        // Show or hide the search button depending on whether there's entered text.
-        if searchButton.isHidden != query.isEmpty {
-            let duration = animated ? UIConstants.layout.searchButtonAnimationDuration : 0
-            searchButton.animateHidden(query.isEmpty, duration: duration)
-            searchBorder.animateHidden(query.isEmpty, duration: duration)
-            updateCopyConstraint()
-        }
-        setAttributedButtonTitle(phrase: query, button: searchButton)
-        updateCopyConstraint()
     }
-    fileprivate func updateCopyConstraint() {
-        if UIPasteboard.general.string != nil {
+
+    fileprivate func updateCopyConstraint(showCopyButton: Bool) {
+        if showCopyButton {
             copyButton.isHidden = false
             copyBorder.isHidden = false
             if searchButton.isHidden || searchQuery.isEmpty {
                 copyButton.snp.remakeConstraints { make in
                     make.top.leading.trailing.equalTo(self)
+                    make.height.equalTo(56)
                 }
             } else {
                 copyButton.snp.remakeConstraints { make in
                     make.leading.trailing.equalTo(self)
                     make.top.equalTo(searchBorder)
+                    make.height.equalTo(56)
                 }
             }
         } else {
             copyButton.isHidden = true
             copyBorder.isHidden = true
         }
-    }
-
-    fileprivate func animateWithKeyboard(keyboardState: KeyboardState) {
-        UIView.animate(withDuration: keyboardState.animationDuration, animations: {
-            let keyboardHeight = keyboardState.intersectionHeightForView(view: self)
-            self.bottomConstraint.update(offset: -keyboardHeight)
-            self.layoutIfNeeded()
-        })
     }
 
     @objc private func didPressSearch() {
@@ -182,6 +188,8 @@ class OverlayView: UIView {
     func dismiss() {
         setSearchQuery(query: "", animated: false)
         self.isUserInteractionEnabled = false
+        copyButton.isHidden = true
+        copyBorder.isHidden = true
         animateHidden(true, duration: UIConstants.layout.overlayAnimationDuration) {
             self.isUserInteractionEnabled = true
         }
@@ -190,6 +198,8 @@ class OverlayView: UIView {
     func present() {
         setSearchQuery(query: "", animated: false)
         self.isUserInteractionEnabled = false
+        copyButton.isHidden = false
+        copyBorder.isHidden = false
         animateHidden(false, duration: UIConstants.layout.overlayAnimationDuration) {
             self.isUserInteractionEnabled = true
         }
@@ -206,14 +216,33 @@ extension URL {
 }
 
 extension OverlayView: KeyboardHelperDelegate {
-    public func keyboardHelper(_ keyboardHelper: KeyboardHelper, keyboardWillShowWithState state: KeyboardState) {
-        animateWithKeyboard(keyboardState: state)
-    }
-
-    func keyboardHelper(_ keyboardHelper: KeyboardHelper, keyboardWillHideWithState state: KeyboardState) {
-        animateWithKeyboard(keyboardState: state)
-    }
-
+    func keyboardHelper(_ keyboardHelper: KeyboardHelper, keyboardWillShowWithState state: KeyboardState) {}
+    func keyboardHelper(_ keyboardHelper: KeyboardHelper, keyboardWillHideWithState state: KeyboardState) {}
     func keyboardHelper(_ keyboardHelper: KeyboardHelper, keyboardDidShowWithState state: KeyboardState) {}
     func keyboardHelper(_ keyboardHelper: KeyboardHelper, keyboardDidHideWithState state: KeyboardState) {}
+}
+
+extension UIPasteboard {
+    
+    //
+    // As of iOS 11: macOS/iOS's Universal Clipboard feature causes UIPasteboard to block.
+    //
+    // (Known) Apple Radars that have been filed:
+    //
+    //  http://www.openradar.me/28787338
+    //  http://www.openradar.me/28774309
+    //
+    // Discussion on Twitter:
+    //
+    //  https://twitter.com/steipete/status/787985965432369152
+    //
+    //  To workaround this, urlAsync(callback:) makes a call of UIPasteboard.general on
+    //  an async dispatch queue, calling the completion block when done.
+    //
+    func urlAsync(callback: @escaping (URL?) -> Void) {
+        DispatchQueue.global().async {
+            let url = URL(string: UIPasteboard.general.string ?? "")
+            callback(url)
+        }
+    }
 }
