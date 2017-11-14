@@ -13,8 +13,10 @@ protocol URLBarDelegate: class {
     func urlBarDidActivate(_ urlBar: URLBar)
     func urlBarDidDeactivate(_ urlBar: URLBar)
     func urlBarDidFocus(_ urlBar: URLBar)
+    func urlBarDidPressScrollTop(_: URLBar)
     func urlBarDidDismiss(_ urlBar: URLBar)
     func urlBarDidPressDelete(_ urlBar: URLBar)
+    func urlBarDidTapShield(_ urlBar: URLBar)
 }
 
 class URLBar: UIView {
@@ -33,14 +35,17 @@ class URLBar: UIView {
     private let urlTextContainer = UIView()
     private let urlText = URLTextField()
     private let truncatedUrlText = UITextView()
+    private let shieldIcon = TrackingProtectionBadge()
     private let lockIcon = UIImageView(image: #imageLiteral(resourceName: "icon_https"))
     private let smallLockIcon = UIImageView(image: #imageLiteral(resourceName: "icon_https_small"))
     private let urlBarBackgroundView = UIView()
     private let textAndLockContainer = UIView()
     private let collapsedUrlAndLockWrapper = UIView()
+    private let collapsedTrackingProtectionBadge = CollapsedTrackingProtectionBadge()
 
     private var fullWidthURLTextConstraints = [Constraint]()
     private var centeredURLConstraints = [Constraint]()
+    private var hideShieldConstraints = [Constraint]()
     private var hideLockConstraints = [Constraint]()
     private var hideSmallLockConstraints = [Constraint]()
     private var hideToolsetConstraints = [Constraint]()
@@ -48,9 +53,13 @@ class URLBar: UIView {
     private var isEditingConstraints = [Constraint]()
     private var preActivationConstraints = [Constraint]()
     private var postActivationConstraints = [Constraint]()
-    
+
     convenience init() {
         self.init(frame: CGRect.zero)
+
+        let singleTap = UITapGestureRecognizer(target: self, action: #selector(didSingleTap(sender:)))
+        singleTap.numberOfTapsRequired = 1
+        addGestureRecognizer(singleTap)
 
         addSubview(toolset.backButton)
         addSubview(toolset.forwardButton)
@@ -63,7 +72,22 @@ class URLBar: UIView {
 
         addSubview(urlTextContainer)
 
+        urlTextContainer.addSubview(shieldIcon)
         urlTextContainer.addSubview(textAndLockContainer)
+
+        shieldIcon.isHidden = true
+        shieldIcon.tintColor = .white
+        shieldIcon.alpha = 0
+        shieldIcon.contentMode = .center
+        shieldIcon.setContentCompressionResistancePriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
+        shieldIcon.setContentHuggingPriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
+
+        let gestureRecognizer = UITapGestureRecognizer()
+        gestureRecognizer.numberOfTapsRequired = 1
+        gestureRecognizer.cancelsTouchesInView = true
+        gestureRecognizer.addTarget(self, action: #selector(didTapShieldIcon))
+        shieldIcon.isUserInteractionEnabled = true
+        shieldIcon.addGestureRecognizer(gestureRecognizer)
 
         lockIcon.isHidden = true
         lockIcon.alpha = 0
@@ -88,9 +112,15 @@ class URLBar: UIView {
         truncatedUrlText.setContentHuggingPriority(UILayoutPriority(rawValue: 1000), for: .vertical)
         truncatedUrlText.isScrollEnabled = false
         truncatedUrlText.accessibilityIdentifier = "Collapsed.truncatedUrlText"
+        
+        collapsedTrackingProtectionBadge.alpha = 0
+        collapsedTrackingProtectionBadge.tintColor = .white
+        collapsedTrackingProtectionBadge.setContentCompressionResistancePriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
+        collapsedTrackingProtectionBadge.setContentHuggingPriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
 
         collapsedUrlAndLockWrapper.addSubview(smallLockIcon)
         collapsedUrlAndLockWrapper.addSubview(truncatedUrlText)
+        collapsedUrlAndLockWrapper.addSubview(collapsedTrackingProtectionBadge)
         addSubview(collapsedUrlAndLockWrapper)
 
         // UITextField doesn't allow customization of the clear button, so we create
@@ -161,7 +191,8 @@ class URLBar: UIView {
         let toolsetButtonWidthMultiplier = 0.08
 
         toolset.backButton.snp.makeConstraints { make in
-            make.leading.centerY.equalTo(self)
+            make.leading.equalTo(safeAreaLayoutGuide)
+            make.centerY.equalTo(self)
 
             showToolsetConstraints.append(make.width.equalTo(self).multipliedBy(toolsetButtonWidthMultiplier).constraint)
 
@@ -194,13 +225,21 @@ class URLBar: UIView {
             make.width.equalTo(self).priority(500)
         }
 
+        shieldIcon.snp.makeConstraints { make in
+            make.top.leading.bottom.equalToSuperview()
+
+            hideShieldConstraints.append(contentsOf:[
+                make.width.equalTo(0).constraint
+            ])
+        }
+
         textAndLockContainer.snp.makeConstraints { make in
             make.top.bottom.equalTo(urlTextContainer)
-            make.leading.greaterThanOrEqualTo(urlTextContainer).priority(999)
+            make.leading.equalTo(shieldIcon.snp.trailing).priority(999)
             make.trailing.lessThanOrEqualTo(urlTextContainer)
 
             centeredURLConstraints.append(make.centerX.equalTo(self).constraint)
-            fullWidthURLTextConstraints.append(make.leading.trailing.equalTo(urlTextContainer).constraint)
+            fullWidthURLTextConstraints.append(make.trailing.equalTo(urlTextContainer).constraint)
         }
 
         lockIcon.snp.makeConstraints { make in
@@ -221,7 +260,8 @@ class URLBar: UIView {
         }
 
         toolset.sendButton.snp.makeConstraints { make in
-            make.centerY.trailing.equalTo(self)
+            make.trailing.equalTo(safeAreaLayoutGuide)
+            make.centerY.equalTo(self)
             make.size.equalTo(toolset.backButton)
         }
 
@@ -270,6 +310,12 @@ class URLBar: UIView {
             hideLockConstraints.append(contentsOf: [
                 make.width.equalTo(0).constraint
             ])
+        }
+        
+        collapsedTrackingProtectionBadge.snp.makeConstraints { make in
+            make.leading.equalTo(self).offset(10)
+            make.width.height.equalTo(smallLockIcon)
+            make.bottom.top.equalTo(smallLockIcon)
         }
 
         truncatedUrlText.snp.makeConstraints { make in
@@ -320,6 +366,7 @@ class URLBar: UIView {
             if !urlText.isEditing {
                 setTextToURL()
                 updateLockIcon()
+                updateShieldIcon()
             }
         }
     }
@@ -359,7 +406,8 @@ class URLBar: UIView {
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         // Since the URL text field is smaller and centered on iPads, make sure
         // that touching the surrounding area will trigger editing.
-        if let touch = touches.first {
+        if urlText.isUserInteractionEnabled,
+            let touch = touches.first {
             let point = touch.location(in: urlTextContainer)
             if urlTextContainer.bounds.contains(point) {
                 urlText.becomeFirstResponder()
@@ -402,6 +450,23 @@ class URLBar: UIView {
         }
     }
 
+    private func updateShieldIcon() {
+        let visible = !isEditing && url != nil
+        let duration = UIConstants.layout.urlBarTransitionAnimationDuration / 2
+
+        shieldIcon.animateHidden(!visible, duration: duration)
+        self.layoutIfNeeded()
+
+        UIView.animate(withDuration: duration) {
+            if visible {
+                self.hideShieldConstraints.forEach { $0.deactivate() }
+            } else {
+                self.hideShieldConstraints.forEach { $0.activate() }
+            }
+        }
+
+    }
+
     fileprivate func present() {
         guard !isEditing else { return }
 
@@ -414,6 +479,7 @@ class URLBar: UIView {
         isEditing = true
         shouldPresent = false
         updateLockIcon()
+        updateShieldIcon()
         toolset.sendButton.isEnabled = false
         delegate?.urlBarDidFocus(self)
 
@@ -444,6 +510,7 @@ class URLBar: UIView {
 
         isEditing = false
         updateLockIcon()
+        updateShieldIcon()
         urlText.resignFirstResponder()
         setTextToURL()
         self.toolset.sendButton.isEnabled = true
@@ -473,6 +540,18 @@ class URLBar: UIView {
             }
 
             self.layoutIfNeeded()
+        }
+    }
+
+    @objc private func didSingleTap(sender: UITapGestureRecognizer) {
+        if urlText.isUserInteractionEnabled {
+            let y = sender.location(in: self).y
+            guard y < 10 else { return }
+            delegate?.urlBarDidPressScrollTop(self)
+        } else {
+            let y = sender.location(in: collapsedUrlAndLockWrapper).y
+            guard y < 18 else { return }
+            delegate?.urlBarDidPressScrollTop(self)
         }
     }
 
@@ -521,6 +600,10 @@ class URLBar: UIView {
         delegate?.urlBar(self, didEnterText: "")
     }
 
+    @objc private func didTapShieldIcon() {
+        delegate?.urlBarDidTapShield(self)
+    }
+
     private func deactivate() {
         urlText.text = nil
         urlText.rightView?.isHidden = true
@@ -551,7 +634,7 @@ class URLBar: UIView {
     }
 
     func collapseUrlBar(expandAlpha: CGFloat, collapseAlpha: CGFloat) {
-        self.isUserInteractionEnabled = (expandAlpha == 1)
+        self.urlText.isUserInteractionEnabled = (expandAlpha == 1)
 
         deleteButton.alpha = expandAlpha
         urlTextContainer.alpha = expandAlpha
@@ -561,10 +644,16 @@ class URLBar: UIView {
         toolset.forwardButton.alpha = expandAlpha
         toolset.stopReloadButton.alpha = expandAlpha
         toolset.sendButton.alpha = expandAlpha
+        collapsedTrackingProtectionBadge.alpha = collapseAlpha
         // updating the small lock icon status here in order to prevent the icon from flashing on start up
         let visible = !isEditing && (url?.scheme == "https")
         smallLockIcon.alpha = visible ? collapseAlpha : 0
         self.layoutIfNeeded()
+    }
+    
+    func updateTrackingProtectionBadge(trackingStatus: TrackingProtectionStatus) {
+        shieldIcon.updateState(trackingStatus: trackingStatus)
+        collapsedTrackingProtectionBadge.updateState(trackingStatus: trackingStatus)
     }
 }
 
@@ -633,5 +722,120 @@ private class URLTextField: AutocompleteTextField {
 
     override fileprivate func rightViewRect(forBounds bounds: CGRect) -> CGRect {
         return super.rightViewRect(forBounds: bounds).offsetBy(dx: -UIConstants.layout.urlBarWidthInset, dy: 0)
+    }
+}
+
+class TrackingProtectionBadge: UIView {
+    let counterLabel = UILabel()
+    let trackingProtectionOff = UIImageView(image: #imageLiteral(resourceName: "tracking_protection_off"))
+    let trackingProtectionCounter = UIImageView(image: #imageLiteral(resourceName: "tracking_protection_counter"))
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setContentHuggingPriority(.defaultLow, for: .horizontal)
+        setupViews()
+    }
+
+    func setupViews() {
+        counterLabel.backgroundColor = .clear
+        counterLabel.textColor = UIColor.white
+        counterLabel.textAlignment = .left
+        counterLabel.font = UIFont.boldSystemFont(ofSize: 10)
+        counterLabel.text = "0"
+        trackingProtectionOff.alpha = 0
+        
+        addSubview(trackingProtectionOff)
+        addSubview(trackingProtectionCounter)
+        counterLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        counterLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        addSubview(counterLabel)
+
+        trackingProtectionCounter.setContentHuggingPriority(.required, for: .horizontal)
+        trackingProtectionCounter.snp.makeConstraints { make in
+            make.leading.equalToSuperview().priority(1000)
+            make.centerY.equalToSuperview().priority(500)
+            make.trailing.equalToSuperview().priority(500)
+        }
+
+        trackingProtectionOff.setContentHuggingPriority(.required, for: .horizontal)
+        trackingProtectionOff.snp.makeConstraints { make in
+            make.leading.equalToSuperview().priority(1000)
+            make.centerY.equalToSuperview().priority(500)
+        }
+        
+        counterLabel.snp.makeConstraints { make in
+            make.bottom.equalTo(trackingProtectionCounter).offset(-3).priority(500)
+            make.leading.equalTo(trackingProtectionCounter).offset(15).priority(1000)
+            make.trailing.equalTo(self)
+        }
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func updateState(trackingStatus: TrackingProtectionStatus) {
+        switch trackingStatus {
+        case .on(let info):
+            trackingProtectionOff.alpha = 0
+            trackingProtectionCounter.alpha = 1
+            counterLabel.alpha = 1
+            counterLabel.text = String(info.total)
+        default:
+            trackingProtectionOff.alpha = 1
+            trackingProtectionCounter.alpha = 0
+            counterLabel.alpha = 0
+        }
+    }
+}
+
+class CollapsedTrackingProtectionBadge: TrackingProtectionBadge {
+    let trackingProtection = UIImageView(image: #imageLiteral(resourceName: "tracking_protection"))
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+    }
+    
+    override func setupViews() {
+        addSubview(trackingProtectionOff)
+        addSubview(trackingProtection)
+        addSubview(counterLabel)
+        
+        trackingProtection.snp.makeConstraints { make in
+            make.leading.centerY.equalTo(self)
+            make.width.height.equalTo(18)
+        }
+
+        trackingProtectionOff.snp.makeConstraints { make in
+            make.leading.centerY.equalTo(self)
+            make.width.height.equalTo(18)
+        }
+        
+        counterLabel.backgroundColor = .clear
+        counterLabel.textColor = UIColor.white
+        counterLabel.font = UIFont.boldSystemFont(ofSize: 12)
+        counterLabel.textAlignment = .center
+        counterLabel.snp.makeConstraints { make in
+            make.leading.equalTo(trackingProtection.snp.trailing).offset(4)
+            make.centerY.equalTo(trackingProtection)
+        }
+    }
+    
+    override func updateState(trackingStatus: TrackingProtectionStatus) {
+        switch trackingStatus {
+        case .on(let info):
+            trackingProtectionOff.alpha = 0
+            trackingProtection.alpha = 1
+            counterLabel.alpha = 1
+            counterLabel.text = String(info.total)
+        default:
+            trackingProtectionOff.alpha = 1
+            trackingProtection.alpha = 0
+            counterLabel.alpha = 0
+        }
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }
