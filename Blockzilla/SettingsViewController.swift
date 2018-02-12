@@ -7,6 +7,74 @@ import SnapKit
 import UIKit
 import Telemetry
 
+class SettingsTableViewSearchCell: UITableViewCell {
+    private let newLabel = UILabel()
+    private let accessoryLabel = UILabel()
+    private let spacerView = UIView()
+
+    var accessoryLabelText: String? {
+        get { return accessoryLabel.text }
+        set {
+            accessoryLabel.text = newValue
+            accessoryLabel.sizeToFit()
+        }
+    }
+
+    var label: String? {
+        get { return newLabel.text }
+        set {
+            newLabel.text = newValue
+            newLabel.sizeToFit()
+        }
+    }
+
+    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        newLabel.numberOfLines = 0
+        newLabel.lineBreakMode = .byWordWrapping
+        textLabel?.numberOfLines = 0
+        textLabel?.text = " "
+
+        contentView.addSubview(accessoryLabel)
+        contentView.addSubview(newLabel)
+        contentView.addSubview(spacerView)
+
+        newLabel.textColor = UIConstants.colors.settingsTextLabel
+        accessoryLabel.textColor = UIConstants.colors.settingsDetailLabel
+        accessoryType = .disclosureIndicator
+
+        let backgroundColorView = UIView()
+        backgroundColorView.backgroundColor = UIConstants.colors.cellSelected
+        selectedBackgroundView = backgroundColorView
+
+        accessoryLabel.setContentHuggingPriority(.required, for: .horizontal)
+        accessoryLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        accessoryLabel.snp.makeConstraints { make in
+            make.trailing.centerY.equalToSuperview()
+        }
+
+        newLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        newLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+
+        spacerView.snp.makeConstraints { make in
+            make.top.bottom.leading.equalToSuperview()
+            make.trailing.equalTo(textLabel!.snp.leading)
+        }
+
+        newLabel.snp.makeConstraints { make in
+            make.leading.equalTo(spacerView.snp.trailing)
+            make.top.equalToSuperview().offset(11)
+            make.bottom.equalToSuperview().offset(-11)
+            make.trailing.equalTo(accessoryLabel.snp.leading).offset(-10)
+        }
+
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
 class SettingsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     fileprivate let tableView = UITableView(frame: .zero, style: .grouped)
 
@@ -40,6 +108,8 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
         self.searchEngineManager = searchEngineManager
         self.whatsNew = whatsNew
         super.init(nibName: nil, bundle: nil)
+
+        tableView.register(SettingsTableViewSearchCell.self, forCellReuseIdentifier: "searchCell")
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -91,6 +161,7 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
     }
 
     override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         updateSafariEnabledState()
     }
 
@@ -112,6 +183,7 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
         for i in 1..<(indexPath as NSIndexPath).section {
             index += tableView.numberOfRows(inSection: i)
         }
+        
         return toggles[index]
     }
 
@@ -175,16 +247,21 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         var cell: UITableViewCell
-        switch (indexPath as NSIndexPath).section {
+        switch indexPath.section {
         case 0:
-            cell = UITableViewCell(style: .subtitle, reuseIdentifier: "searchCell")
-            cell.textLabel?.text = searchEngineManager.activeEngine.name
-            cell.accessoryType = .disclosureIndicator
-            cell.accessibilityIdentifier = "SettingsViewController.searchCell"
+            guard let searchCell = tableView.dequeueReusableCell(withIdentifier: "searchCell") as? SettingsTableViewSearchCell else { fatalError("No Search Cells!") }
 
-            let backgroundColorView = UIView()
-            backgroundColorView.backgroundColor = UIConstants.colors.cellSelected
-            cell.selectedBackgroundView = backgroundColorView
+            let label = indexPath.row == 0 ? UIConstants.strings.settingsSearchLabel : UIConstants.strings.settingsAutocompleteSection
+            let autocompleteLabel = Settings.getToggle(.enableDomainAutocomplete) || Settings.getToggle(.enableCustomDomainAutocomplete) ? UIConstants.strings.autocompleteCustomEnabled : UIConstants.strings.autocompleteCustomDisabled
+            let accessoryLabel = indexPath.row == 0 ? searchEngineManager.activeEngine.name : autocompleteLabel
+            let identifier = indexPath.row == 0 ? "SettingsViewController.searchCell" : "SettingsViewController.autocompleteCell"
+
+            searchCell.accessoryLabelText = accessoryLabel
+            searchCell.label = label
+            searchCell.accessoryType = .disclosureIndicator
+            searchCell.accessibilityIdentifier = identifier
+
+            cell = searchCell
         default:
             if indexPath.section == 4 && indexPath.row == 1 {
                 cell = UITableViewCell(style: .subtitle, reuseIdentifier: "aboutCell")
@@ -212,7 +289,7 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
-        case 0: return 1 // Search Engine.
+        case 0: return 2 // Search.
         case 1: return 1 // Integration.
         case 2: return 4 // Privacy.
         case 3: return 1 // Performance.
@@ -229,7 +306,9 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         // Height for the Search Engine and Learn More row.
-        if indexPath.section == 0 || (indexPath.section == 4 && indexPath.row == 1) {
+        if indexPath.section == 0 { return UITableViewAutomaticDimension }
+        if indexPath.section == 5 ||
+            (indexPath.section == 4 && indexPath.row == 1) {
             return 44
         }
 
@@ -261,7 +340,7 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
         var groupingOffset = 16
         switch section {
         case 0:
-            labelText = UIConstants.strings.settingsSearchSection
+            labelText = UIConstants.strings.settingsSearchTitle
             groupingOffset = 3
         case 1: labelText = UIConstants.strings.toggleSectionIntegration
         case 2: labelText = UIConstants.strings.toggleSectionPrivacy
@@ -313,10 +392,14 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
 
         switch indexPath.section {
         case 0:
-            let searchSettingsViewController = SearchSettingsViewController(searchEngineManager: searchEngineManager)
-            searchSettingsViewController.delegate = self
-            navigationController?.pushViewController(searchSettingsViewController, animated: true)
-            break
+            if indexPath.row == 0 {
+                let searchSettingsViewController = SearchSettingsViewController(searchEngineManager: searchEngineManager)
+                searchSettingsViewController.delegate = self
+                navigationController?.pushViewController(searchSettingsViewController, animated: true)
+            } else if indexPath.row == 1 {
+                let autcompleteSettingViewController = AutocompleteSettingViewController()
+                navigationController?.pushViewController(autcompleteSettingViewController, animated: true)
+            }
         case 4:
             if indexPath.row == 1 {
                 aboutClicked()
@@ -344,7 +427,7 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
     @objc private func whatsNewClicked() {
         highlightsButton?.tintColor = UIColor.white
         
-        guard let url = SupportUtils.URLForTopic(topic: "whats-new-android-focus-311") else { return }
+        guard let url = SupportUtils.URLForTopic(topic: "whats-new-focus-ios-4") else { return }
         navigationController?.pushViewController(SettingsContentViewController(url: url), animated: true)
         
         whatsNew.didShowWhatsNew()
@@ -395,24 +478,7 @@ class SettingsViewController: UIViewController, UITableViewDataSource, UITableVi
 
 extension SettingsViewController: SearchSettingsViewControllerDelegate {
     func searchSettingsViewController(_ searchSettingsViewController: SearchSettingsViewController, didSelectEngine engine: SearchEngine) {
-        tableView.cellForRow(at: IndexPath(row: 0, section: 0))?.textLabel?.text = engine.name
-    }
-}
-
-private class PaddedSwitch: UIView {
-    private static let Padding: CGFloat = 8
-
-    init(switchView: UISwitch) {
-        super.init(frame: CGRect.zero)
-
-        addSubview(switchView)
-
-        frame.size = CGSize(width: switchView.frame.width + PaddedSwitch.Padding, height: switchView.frame.height)
-        switchView.frame.origin = CGPoint(x: PaddedSwitch.Padding, y: 0)
-    }
-
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        (tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? SettingsTableViewSearchCell)?.accessoryLabelText = engine.name
     }
 }
 

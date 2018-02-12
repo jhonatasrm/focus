@@ -34,6 +34,48 @@ class SearchProviderTest: BaseTestCase {
             waitforExistence(element: app.staticTexts["Automatic private browsing."])
 		}
 	}
+    
+    func testAddRemoveCustomSearchProvider() {
+        app.buttons["Settings"].tap()
+        app.tables.cells["SettingsViewController.searchCell"].tap()
+        app.tables.cells["addSearchEngine"].tap()
+        
+        app.textFields["nameInput"].typeText("MDN")
+        app.textViews["templateInput"].tap()
+        app.textViews["templateInput"].typeText("https://developer.mozilla.org/en-US/search?q=%s")
+        app.navigationBars.buttons["save"].tap()
+
+        let toast = app.staticTexts["Toast.label"]
+        waitforNoExistence(element: toast)
+
+        XCTAssertTrue(app.tables.cells["MDN"].exists)
+        app.tables.cells["Wikipedia"].tap()
+        
+        waitforExistence(element: app.tables.cells["SettingsViewController.searchCell"])
+        app.tables.cells["SettingsViewController.searchCell"].tap()
+        
+        // enter edit mode
+        app.navigationBars.buttons["edit"].tap()
+        app.tables.cells["MDN"].buttons["Delete MDN"].tap()
+        app.tables.cells["MDN"].buttons["Delete"].tap()
+        
+        // leave edit mode
+        app.navigationBars.buttons["edit"].tap()
+    }
+    
+    func testPreventionOfRemovingDefaultSearchProvider() {
+        app.buttons["Settings"].tap()
+        let defaultEngineName = app.tables.cells["SettingsViewController.searchCell"].staticTexts.element(boundBy: 1).label
+        app.tables.cells["SettingsViewController.searchCell"].tap()
+        
+        XCTAssertTrue(app.tables.cells["restoreDefaults"].exists)
+        
+        // enter edit mode
+        app.navigationBars.buttons["edit"].tap()
+        XCTAssertFalse(app.tables.cells["restoreDefaults"].exists)
+        
+        XCTAssertFalse(app.tables.cells["defaultEngineName"].buttons["Delete \(defaultEngineName)"].exists)
+    }
 	
 	private func changeSearchProvider(provider: String) {
 		

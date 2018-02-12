@@ -194,19 +194,23 @@ class BrowserViewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         navigationController?.setNavigationBarHidden(true, animated: animated)
-
-        // Prevent the keyboard from showing up until after the user has viewed the Intro.
-        let userHasSeenIntro = UserDefaults.standard.integer(forKey: AppDelegate.prefIntroDone) == AppDelegate.prefIntroVersion
-
-        if userHasSeenIntro && !urlBar.inBrowsingMode {
-            urlBar.becomeFirstResponder()
-        }
         
         homeView?.setHighlightWhatsNew(shouldHighlight: shouldShowWhatsNew())
         
         super.viewWillAppear(animated)
     }
-
+    
+    override func viewDidAppear(_ animated: Bool) {
+        // Prevent the keyboard from showing up until after the user has viewed the Intro.
+        let userHasSeenIntro = UserDefaults.standard.integer(forKey: AppDelegate.prefIntroDone) == AppDelegate.prefIntroVersion
+        
+        if userHasSeenIntro && !urlBar.inBrowsingMode {
+            self.urlBar.becomeFirstResponder()
+        }
+        
+        super.viewDidAppear(animated)
+    }
+    
     private func containWebView() {
         addChildViewController(webViewController)
         webViewContainer.addSubview(webViewController.view)
@@ -568,8 +572,11 @@ extension BrowserViewController: BrowserToolsetDelegate {
 
     func browserToolsetDidPressSend(_ browserToolset: BrowserToolset) {
         guard let url = webViewController.url else { return }
+        
+        let shareExtensionHelper = OpenUtils(url: url, webViewController: webViewController)
+        let controller = shareExtensionHelper.buildShareViewController(url: url, title: webViewController.title, printFormatter: webViewController.printFormatter, anchor: browserToolset.sendButton)
 
-        present(OpenUtils.buildShareViewController(url: url, title: webViewController.title, printFormatter: webViewController.printFormatter, anchor: browserToolset.sendButton), animated: true, completion: nil)
+        present(controller, animated: true, completion: nil)
     }
 
     func browserToolsetDidPressSettings(_ browserToolbar: BrowserToolset) {

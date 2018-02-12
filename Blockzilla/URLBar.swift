@@ -29,7 +29,7 @@ class URLBar: UIView {
 
     fileprivate let cancelButton = InsetButton()
     fileprivate let deleteButton = InsetButton()
-    fileprivate let domainCompletion = DomainCompletion()
+    fileprivate let domainCompletion = DomainCompletion(completionSources: [TopDomainsCompletionSource(), CustomCompletionSource()])
 
     private let toolset = BrowserToolset()
     private let urlTextContainer = UIView()
@@ -154,6 +154,7 @@ class URLBar: UIView {
         cancelButton.setContentHuggingPriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
         cancelButton.setContentCompressionResistancePriority(UILayoutPriority(rawValue: 1000), for: .horizontal)
         cancelButton.addTarget(self, action: #selector(dismiss), for: .touchUpInside)
+        cancelButton.accessibilityIdentifier = "URLBar.cancelButton"
         addSubview(cancelButton)
 
         deleteButton.isHidden = true
@@ -749,6 +750,7 @@ class TrackingProtectionBadge: UIView {
         counterLabel.textAlignment = .center
         counterLabel.font = UIFont.boldSystemFont(ofSize: 8)
         counterLabel.text = "0"
+        counterLabel.accessibilityIdentifier = "TrackingProtectionBadge.counterLabel"
         trackingProtectionOff.alpha = 0
         
         addSubview(trackingProtectionOff)

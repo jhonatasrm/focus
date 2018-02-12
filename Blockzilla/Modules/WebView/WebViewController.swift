@@ -4,6 +4,8 @@
 
 import UIKit
 import WebKit
+import Telemetry
+import OnePasswordExtension
 
 protocol BrowserState {
     var url: URL? { get }
@@ -40,6 +42,7 @@ class WebViewController: UIViewController, WebController {
     weak var delegate: WebControllerDelegate?
 
     private var browserView = WKWebView()
+    var onePasswordExtensionItem: NSExtensionItem!
     private var progressObserver: NSKeyValueObservation?
     fileprivate var trackingProtecitonStatus = TrackingProtectionStatus.on(TrackingInformation()) {
         didSet {
@@ -131,6 +134,8 @@ class WebViewController: UIViewController, WebController {
     }
 
     func disableTrackingProtection() {
+        guard case .on = trackingProtecitonStatus else { return }
+
         browserView.configuration.userContentController.removeScriptMessageHandler(forName: "focusTrackingProtection")
         browserView.configuration.userContentController.removeScriptMessageHandler(forName: "focusTrackingProtectionPostLoad")
         browserView.configuration.userContentController.removeAllUserScripts()
@@ -139,6 +144,8 @@ class WebViewController: UIViewController, WebController {
     }
 
     func enableTrackingProtection() {
+        guard case .off = trackingProtecitonStatus else { return }
+
         setupBlockLists()
         setupUserScripts()
         trackingProtecitonStatus = .on(TrackingInformation())
@@ -181,7 +188,15 @@ extension WebViewController: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         let present: (UIViewController) -> Void = { self.present($0, animated: true, completion: nil) }
-        let decision: WKNavigationActionPolicy = RequestHandler().handle(request: navigationAction.request, alertCallback: present) ? .allow : .cancel
+
+        // prevent Focus from opening universal links
+        // https://stackoverflow.com/questions/38450586/prevent-universal-links-from-opening-in-wkwebview-uiwebview
+        let allowDecision = WKNavigationActionPolicy(rawValue: WKNavigationActionPolicy.allow.rawValue + 2) ?? .allow
+
+        let decision: WKNavigationActionPolicy = RequestHandler().handle(request: navigationAction.request, alertCallback: present) ? allowDecision : .cancel
+        if navigationAction.navigationType == .linkActivated && browserView.url != navigationAction.request.url {
+            Telemetry.default.recordEvent(category: TelemetryEventCategory.action, method: TelemetryEventMethod.click, object: TelemetryEventObject.websiteLink)
+        }
         decisionHandler(decision)
     }
 }
@@ -208,7 +223,7 @@ extension WebViewController: WKUIDelegate {
 extension WebViewController: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: String],
-              let urlString = body["url"] else { return }
+            let urlString = body["url"] else { return }
 
         guard var components = URLComponents(string: urlString) else { return }
         components.scheme = "http"
@@ -217,5 +232,25 @@ extension WebViewController: WKScriptMessageHandler {
         if let listItem = TrackingProtection.shared.isBlocked(url: url) {
             trackingInformation = trackingInformation.create(byAddingListItem: listItem)
         }
+    }
+}
+
+extension WebViewController {
+    func createPasswordManagerExtensionItem() {
+        OnePasswordExtension.shared().createExtensionItem(forWebView: browserView, completion: {(extensionItem, error) -> Void in
+            if extensionItem == nil {
+                return
+            }
+            // Set the 1Password extension item property
+            self.onePasswordExtensionItem = extensionItem
+        })
+    }
+    
+    func fillPasswords(returnedItems: [AnyObject]) {
+        OnePasswordExtension.shared().fillReturnedItems(returnedItems, intoWebView: browserView, completion: { (success, returnedItemsError) -> Void in
+            if !success {
+                return
+            }
+        })
     }
 }
